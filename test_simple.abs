@@ -1,0 +1,13 @@
+PROGRAM TestSimple
+
+VAR
+  x, y, result : INT;
+
+BEGIN
+  x := 5;
+  y := 10;
+  result := x + y * 2;
+  WRITE(result);
+  x++;
+  y--;
+END
