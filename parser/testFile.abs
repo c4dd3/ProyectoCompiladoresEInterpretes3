@@ -1,63 +1,33 @@
-PROGRAM Proyecto2
+PROGRAM Prueba
 
-{ === Variables globales === }
 VAR
-  a, b, i : INT;
-  r       : REAL;
-  c       : CHAR;
-  s       : STRING;
 
-(* === Función con retorno === *)
-FUNCTION Inc(x: INT): INT
+numero,limite,contador: INT;  
+nombre, apellido: STRING;
+
+FUNCTION funcion4 ():INT
 BEGIN
-  Inc := x + 1;
+ funcion4:=0;
 END
 
-{ === Procedimiento sin retorno === }
-PROCEDURE MostrarMensaje()
+
+FUNCTION funcion5 (int x):INT
 BEGIN
-  WRITE("=== Ejecución de Proyecto 2 ===");
+ a:= a + 6;
+ funcion5:=0; 
 END
 
-(* === Cuerpo principal del programa === *)
+
+PROCEDURE funcionBuena(int x)
 BEGIN
-  a := 5;
-  b := Inc(a);
-  r := 3.0E2 + 2.5;         (* Real + Real *)
-  c := 'A';
-  s := "hola mundo";
+   WHILE (a>8) DO
+   BEGIN
+      i:=0;
+   END
+   x := x+1;
+END
 
-  WRITE("Valores iniciales: ", a, b, r, c, s);
 
-  (* IF con ELSE *)
-  IF (a < b) THEN
-  BEGIN
-    WRITE("a es menor que b");
-  END
-  ELSE
-  BEGIN
-    WRITE("a NO es menor que b");
-  END
-
-  { WHILE con condición booleana }
-  WHILE (a < 10) DO
-  BEGIN
-    a := a + 1;
-  END
-
-  (* FOR con asignación dentro del bloque *)
-  FOR i := 1 TO 3 DO
-  BEGIN
-    WRITE("Iteración ", i);
-  END
-
-  { Uso de operadores booleanos }
-  IF (NOT(a = b) AND (a >= 5)) THEN
-  BEGIN
-    WRITE("Condición booleana evaluada correctamente");
-  END
-
-  READ();          (* lectura sin parámetro *)
-  READ(s);         (* lectura con parámetro *)
-  WRITE("Finalizando ejecución de Proyecto 2");
+BEGIN
+ write("Fin");
 END

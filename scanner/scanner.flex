@@ -1,236 +1,290 @@
+/* ====== 1. Código de usuario ====== */
 package scanner;
-
-import java_cup.runtime.Symbol;
+import java_cup.runtime.*;
+import java.util.*;   // para ArrayList, HashMap, etc.
+import java.io.*;     // para manejar archivos
 import parser.sym;
 
 %%
-%public
+
 %class Scanner
 %unicode
+%public
 %cup
+%function next_token
+%type java_cup.runtime.Symbol
+%ignorecase
 %line
 %column
-%ignorecase
+
+// Palabras reservadas ABS
+RESERVADA = (ABSOLUTE|AND|ARRAY|ASM|BEGIN|CASE|CONST|CONSTRUCTOR|DESTRUCTOR|EXTERNAL|DIV|DO|DOWNTO|ELSE|END|FILE|FOR|FORWARD|FUNCTION|GOTO|IF|IMPLEMENTATION|IN|INLINE|INTERFACE|INTERRUPT|LABEL|MOD|NIL|NOT|OBJECT|OF|OR|PACKED|PRIVATE|PROCEDURE|RECORD|REPEAT|SET|SHL|SHR|STRING|THEN|TO|TYPE|UNIT|UNTIL|USES|VAR|VIRTUAL|WHILE|WITH|XOR|INT|CHAR|READ|REAL|WRITE|PROGRAM)
+
+// Operadores
+OPERADOR = \+|\-|\*|\/|DIV|MOD|NOT|AND|OR|=|<>|<|>|<=|>=|IN|,|;|\+\+|\-\-|\(|\)|\[|\]|:|\.|\^|\*\*
+
+NumeroRealIncorrecto = \.[0-9]+|[0-9]+\.
+// Comentarios
+Comentario1 = \{[^}]*\}
+Comentario1MalCerrado = \{[^}]*
+Comentario2 = \(\*([^*]|\*[^)])*\*\)
+Comentario2MalCerrado = \(\*([^*]|\*[^)])*
+
+// Literales
+Octal         = 0[0-7]+
+Hexadecimal   = 0[xX][0-9a-fA-F]+
+Decimal       = [1-9][0-9]*|0
+Exponent      = [eE][+-]?[0-9]+
+RealStrict    = [0-9]+\.[0-9]+({Exponent})?
+String        = \"([^\"\n])*\" 
+StringIncorrecto = \"([^\"\n\r]*[\n\r][^\"]*)\"
+StringSinCerrar = \"[^\n\r\"]*
+CharInvalido = \'([^\'\n][^\'\n]+)\'|\'\'
+CharSinCierre = \'[^\'\n\r]*
+Char          = \'([^\'\n]|\\.)\' 
+
+// Identificadores (1-127 letras/dígitos, inicia con letra, no palabra reservada)
+// Identificador inválido que comienza con número
+IdentificadorNumero = [0-9][a-zA-Z0-9]*
+// Identificador inválido que comienzan con caracteres no permitidos (EXCLUYENDO operadores válidos)
+IdentificadorSimbolo = [^a-zA-Z0-9 \t\n\r\(\)\[\]\+\-\*\/=<>:;.,][a-zA-Z0-9]*
+// Identificador inválido con caracteres no permitidos (pero SIN espacios ni paréntesis ni símbolos válidos)
+IdentificadorInvalido = [a-zA-Z][a-zA-Z0-9]*[^a-zA-Z0-9 \t\n\r\(\)\[\]\+\-\*\/=<>:;.,]+[a-zA-Z0-9]+
+// Identificador inválido: 128 o más caracteres
+IdentificadorMuyLargo = [a-zA-Z][a-zA-Z0-9]{127}[a-zA-Z0-9]*
+// Identificador válido: empieza con letra, sigue con letras/dígitos
+Identificador = [a-zA-Z][a-zA-Z0-9]{0,126}
+
 
 %{
-  private Symbol sym(int type) {
-    return new Symbol(type, yyline+1, yycolumn+1);
-  }
-  private Symbol sym(int type, Object val) {
-    return new Symbol(type, yyline+1, yycolumn+1, val);
-  }
+// Lista para guardar errores léxicos
+private ArrayList<String> errores = new ArrayList<>();
+
+public ArrayList<String> getErrores() {
+    return errores;
+}
+
+// Mapa para tokens aceptados
+private HashMap<String, TokenInfo> tokensAceptados = new HashMap<>();
+
+// Clase auxiliar para almacenar info de token
+private static class TokenInfo {
+    String tipo;
+    HashMap<Integer, Integer> lineas = new HashMap<>();
+
+    TokenInfo(String tipo) {
+        this.tipo = tipo;
+    } 
+
+    void agregarLinea(int linea) {
+        lineas.put(linea, lineas.getOrDefault(linea, 0) + 1);
+    }
+}
+
+// Método para registrar tokens válidos
+private void registrarToken(String token, String tipo) {
+    token = token.toUpperCase(); 
+    TokenInfo info = tokensAceptados.get(token);
+    if(info == null) {
+        info = new TokenInfo(tipo);
+        tokensAceptados.put(token, info);
+    }
+    info.agregarLinea(yyline + 1); 
+}
+
+// Método para mostrar tabla al final
+public void imprimirTokens() {
+    System.out.printf("%-20s %-25s %s\n", "Token", "Tipo de Token", "Líneas");
+    System.out.println("----------------------------------------------------------");
+    List<String> claves = new ArrayList<>(tokensAceptados.keySet());
+    Collections.sort(claves); // orden alfabético
+    for(String token : claves) {
+        TokenInfo info = tokensAceptados.get(token);
+        StringBuilder sb = new StringBuilder();
+        for(Map.Entry<Integer, Integer> e : info.lineas.entrySet()) {
+            sb.append(e.getKey());
+            if(e.getValue() > 1) sb.append("(").append(e.getValue()).append(")");
+            sb.append(", ");
+        }
+        if(sb.length() >= 2) sb.setLength(sb.length() - 2); // quitar última coma
+        System.out.printf("%-20s %-25s %s\n", token, info.tipo, sb.toString());
+    }
+}
+
+// Método auxiliar para combinar registro y creación de símbolo
+private Symbol crearSymbol(int symType, String token, String tipoToken) {
+    registrarToken(token, tipoToken);
+    return new Symbol(symType, yyline, yycolumn, token);
+}
 %}
-
-/* =============================== MACROS (sin {n,m}) =============================== */
-
-/* espacios */
-ESPACIOS              = [ \t\f\r\n]+
-
-/* básicos */
-DIGITO                = [0-9]
-LETRA                 = [A-Za-z]
-
-/* identificadores (longitud se valida en la acción) */
-ID_BASE               = {LETRA}({LETRA}|{DIGITO})*
-
-/* símbolo ilegal dentro de identificador (algo no permitido entre letras/dígitos) */
-SIMBOLO_ILEGAL        = [^A-Za-z0-9 \t\r\n\+\-\*\/,;\(\)\[\]:\.\^=<>\"\'\{\}]
-ID_CON_SIM_ILLEGAL    = {LETRA}({LETRA}|{DIGITO})*{SIMBOLO_ILEGAL}({LETRA}|{DIGITO})*
-
-/* comentarios no anidados */
-COM_LLAVES            = \{[^}]*\}
-COM_PAREST            = \(\*([^*]|\*+[^)])*\*+\)
-
-/* números (validación fina en acciones donde aplica) */
-HEX_CAND              = 0[xX][A-Za-z0-9]+
-OCT_CAND              = 0[0-9]+
-DEC_ENTERO            = 0|([1-9][0-9]*)
-EXP                   = [eE][+-]?{DIGITO}+
-REAL_PUNTO            = {DIGITO}+\.{DIGITO}+         /* exige dígito a ambos lados del punto */
-REAL                  = {REAL_PUNTO}({EXP})?
-NUM_DEC_E             = {DEC_ENTERO}{EXP}            /* 3e2, 5E+7 */
-
-/* errores específicos P1 para reales con punto suelto */
-ERROR_REAL_PUNTO_LIDER = \.{DIGITO}+({EXP})?
-ERROR_REAL_PUNTO_COLA  = {DIGITO}+\.({EXP})?
-
-/* número seguido de cola de id: 123abc, 0xZ1k, 0789x, 1.2e+3foo, 3e2foo */
-ID_TAIL               = {LETRA}({LETRA}|{DIGITO})*
-NUM_SEGUIDO_TEXTO     = ({HEX_CAND}|{OCT_CAND}|{REAL}|{NUM_DEC_E}|{DEC_ENTERO}){ID_TAIL}
-
-/* literales texto (no multilínea) */
-STRING                = \"([^\\\"\n]|\\.)*\"
-CHAR                  = \'([^\\\'\n]|\\.)\'
-
-/* incompletos (hasta fin de línea) */
-STRING_INCOMP         = \"[^\"\r\n]*
-CHAR_INCOMP           = \'[^\'\r\n]*
-
-/* palabras operadoras del parser */
-OPER_PALABRA_PARSER   = AND|OR|NOT|DIV|MOD
-/* operadoras extra P1 (si las tenías), CUP las verá como IDENT */
-OPER_PALABRA_EXTRA    = IN|SHL|SHR
-
-/* reservadas del parser */
-RES_PARSER = PROGRAM|VAR|BEGIN|END|IF|THEN|ELSE|WHILE|DO|FOR|TO|FUNCTION|PROCEDURE|READ|WRITE|INT|CHAR|REAL|STRING
-
-/* reservadas extra de P1 (no usadas por el parser; se reportan como reservada y se devuelven IDENT) */
-RES_P1_EXTRA = ABSOLUTE|ARRAY|ASM|CASE|CONST|CONSTRUCTOR|DESTRUCTOR|EXTERNAL|DOWNTO|EXIT|FILE|FORWARD|GOTO|INLINE|INTERFACE|LABEL|NIL|OBJECT|OF|PACKED|PRIVATE|PROTECTED|PUBLIC|PUBLISHED|RECORD|REPEAT|SET|TYPE|UNIT|UNTIL|USES|WITH
 
 %%
 
-/* =============================== REGLAS (ordenado) =============================== */
-
-/* 1) Espacios y comentarios */
-{ESPACIOS}       { /* skip */ }
-{COM_LLAVES}     { /* skip */ }
-{COM_PAREST}     { /* skip */ }
-
-/* 2) Guardas de error de reales con punto suelto (P1) */
-{ERROR_REAL_PUNTO_LIDER}  { TokenCollector.addError("ERROR_REAL_PUNTO_LIDER", yytext(), yyline+1); }
-{ERROR_REAL_PUNTO_COLA}   { TokenCollector.addError("ERROR_REAL_PUNTO_COLA",  yytext(), yyline+1); }
-
-/* 3) NÚMEROS VÁLIDOS (en este orden) */
-/* 3.1) Real con punto y opcional exponente */
-{REAL} {
-  TokenCollector.add("LITERAL_REAL", yytext(), yyline+1);
-  return sym(sym.REAL_LIT, yytext());
+// Comentarios
+{Comentario1MalCerrado} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", comentario '{' sin cerrar. Texto: " + yytext());
 }
-/* 3.2) Entero con exponente (sin punto): 3e2, 5E+7 */
-{NUM_DEC_E} {
-  TokenCollector.add("LITERAL_REAL", yytext(), yyline+1);
-  return sym(sym.REAL_LIT, yytext());
+{Comentario2MalCerrado} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", comentario '(*' sin cerrar. Texto: " + yytext());
 }
-/* 3.3) Hex y Oct candidatos con validación en acción */
-{HEX_CAND} {
-  String s = yytext();
-  if (s.matches("0[xX][0-9A-Fa-f]+")) {
-    TokenCollector.add("LITERAL_HEX", s, yyline+1);
-    return sym(sym.INT_LIT, s);
-  } else {
-    TokenCollector.addError("ERROR_HEX_INVALIDO", s, yyline+1);
-  }
+{Comentario1} {
+    registrarToken(yytext(), "COMENTARIO");
 }
-{OCT_CAND} {
-  String s = yytext();
-  if (s.matches("0[0-7]+")) {
-    TokenCollector.add("LITERAL_OCTAL", s, yyline+1);
-    return sym(sym.INT_LIT, s);
-  } else {
-    TokenCollector.addError("ERROR_OCTAL_INVALIDO", s, yyline+1);
-  }
-}
-/* 3.4) Entero decimal */
-{DEC_ENTERO} {
-  TokenCollector.add("LITERAL_ENTERO", yytext(), yyline+1);
-  return sym(sym.INT_LIT, yytext());
+{Comentario2} {
+    registrarToken(yytext(), "COMENTARIO");
 }
 
-/* 4) Número seguido de texto (ERROR) */
-{NUM_SEGUIDO_TEXTO} {
-  TokenCollector.addError("ERROR_NUMERO_SEGUIDO_DE_TEXTO", yytext(), yyline+1);
+// Ignorar espacios y saltos de línea
+[ \t\n\r]+           { /* Ignorar */ }
+
+// ========== OPERADORES Y SÍMBOLOS ==========
+// Símbolos aritméticos
+"+"     { return crearSymbol(sym.MAS, yytext(), "OPERADOR"); }
+"-"     { return crearSymbol(sym.MENOS, yytext(), "OPERADOR"); }
+"*"     { return crearSymbol(sym.POR, yytext(), "OPERADOR"); }
+"/"     { return crearSymbol(sym.DIVISION, yytext(), "OPERADOR"); }
+"++"    { return crearSymbol(sym.INCREMENTO, yytext(), "OPERADOR"); }
+"--"    { return crearSymbol(sym.DECREMENTO, yytext(), "OPERADOR"); }
+"**"    { return crearSymbol(sym.POTENCIA, yytext(), "OPERADOR"); }
+// Símbolos de comparación
+"="     { return crearSymbol(sym.IGUAL, yytext(), "OPERADOR"); }
+"<>"    { return crearSymbol(sym.DIFERENTE, yytext(), "OPERADOR"); }
+"<"     { return crearSymbol(sym.MENOR, yytext(), "OPERADOR"); }
+">"     { return crearSymbol(sym.MAYOR, yytext(), "OPERADOR"); }
+"<="    { return crearSymbol(sym.MENOR_IGUAL, yytext(), "OPERADOR"); }
+">="    { return crearSymbol(sym.MAYOR_IGUAL, yytext(), "OPERADOR"); }
+// Asiginación y otros símbolos
+":="    { return crearSymbol(sym.ASIGNACION, yytext(), "OPERADOR"); }
+"."     { return crearSymbol(sym.PUNTO, yytext(), "OPERADOR"); }
+","     { return crearSymbol(sym.COMA, yytext(), "OPERADOR"); }
+":"     { return crearSymbol(sym.DOS_PUNTOS, yytext(), "OPERADOR"); }
+";"     { return crearSymbol(sym.PUNTO_COMA, yytext(), "OPERADOR"); }
+"("     { return crearSymbol(sym.PARENTESIS_IZQ, yytext(), "OPERADOR"); }
+")"     { return crearSymbol(sym.PARENTESIS_DER, yytext(), "OPERADOR"); }
+"["     { return crearSymbol(sym.CORCHETE_IZQ, yytext(), "OPERADOR"); }
+"]"     { return crearSymbol(sym.CORCHETE_DER, yytext(), "OPERADOR"); }
+"^"     { return crearSymbol(sym.PUNTERO, yytext(), "OPERADOR"); }
+
+
+// ========== PALABRAS RESERVADAS ==========
+"ABSOLUTE"      { return crearSymbol(sym.ABSOLUTE, yytext(), "PALABRA RESERVADA"); }
+"AND"           { return crearSymbol(sym.AND, yytext(), "PALABRA RESERVADA"); }
+"ARRAY"         { return crearSymbol(sym.ARRAY, yytext(), "PALABRA RESERVADA"); }
+"ASM"           { return crearSymbol(sym.ASM, yytext(), "PALABRA RESERVADA"); }
+"BEGIN"         { return crearSymbol(sym.BEGIN, yytext(), "PALABRA RESERVADA"); }
+"CASE"          { return crearSymbol(sym.CASE, yytext(), "PALABRA RESERVADA"); }
+"CONST"         { return crearSymbol(sym.CONST, yytext(), "PALABRA RESERVADA"); }
+"CONSTRUCTOR"   { return crearSymbol(sym.CONSTRUCTOR, yytext(), "PALABRA RESERVADA"); }
+"DESTRUCTOR"    { return crearSymbol(sym.DESTRUCTOR, yytext(), "PALABRA RESERVADA"); }
+"DIV"           { return crearSymbol(sym.DIV, yytext(), "PALABRA RESERVADA"); }
+"DO"            { return crearSymbol(sym.DO, yytext(), "PALABRA RESERVADA"); }
+"DOWNTO"        { return crearSymbol(sym.DOWNTO, yytext(), "PALABRA RESERVADA"); }
+"ELSE"          { return crearSymbol(sym.ELSE, yytext(), "PALABRA RESERVADA"); }
+"END"           { return crearSymbol(sym.END, yytext(), "PALABRA RESERVADA"); }
+"EXTERNAL"      { return crearSymbol(sym.EXTERNAL, yytext(), "PALABRA RESERVADA"); }
+"FILE"          { return crearSymbol(sym.FILE, yytext(), "PALABRA RESERVADA"); }
+"FOR"           { return crearSymbol(sym.FOR, yytext(), "PALABRA RESERVADA"); }
+"FORWARD"       { return crearSymbol(sym.FORWARD, yytext(), "PALABRA RESERVADA"); }
+"FUNCTION"      { return crearSymbol(sym.FUNCTION, yytext(), "PALABRA RESERVADA"); }
+"GOTO"          { return crearSymbol(sym.GOTO, yytext(), "PALABRA RESERVADA"); }
+"IF"            { return crearSymbol(sym.IF, yytext(), "PALABRA RESERVADA"); }
+"IMPLEMENTATION" { return crearSymbol(sym.IMPLEMENTATION, yytext(), "PALABRA RESERVADA"); }
+"IN"            { return crearSymbol(sym.IN, yytext(), "PALABRA RESERVADA"); }
+"INLINE"        { return crearSymbol(sym.INLINE, yytext(), "PALABRA RESERVADA"); }
+"INTERFACE"     { return crearSymbol(sym.INTERFACE, yytext(), "PALABRA RESERVADA"); }
+"INTERRUPT"     { return crearSymbol(sym.INTERRUPT, yytext(), "PALABRA RESERVADA"); }
+"LABEL"         { return crearSymbol(sym.LABEL, yytext(), "PALABRA RESERVADA"); }
+"MOD"           { return crearSymbol(sym.MOD, yytext(), "PALABRA RESERVADA"); }
+"NIL"           { return crearSymbol(sym.NIL, yytext(), "PALABRA RESERVADA"); }
+"NOT"           { return crearSymbol(sym.NOT, yytext(), "PALABRA RESERVADA"); }
+"OBJECT"        { return crearSymbol(sym.OBJECT, yytext(), "PALABRA RESERVADA"); }
+"OF"            { return crearSymbol(sym.OF, yytext(), "PALABRA RESERVADA"); }
+"OR"            { return crearSymbol(sym.OR, yytext(), "PALABRA RESERVADA"); }
+"PACKED"        { return crearSymbol(sym.PACKED, yytext(), "PALABRA RESERVADA"); }
+"PRIVATE"       { return crearSymbol(sym.PRIVATE, yytext(), "PALABRA RESERVADA"); }
+"PROCEDURE"     { return crearSymbol(sym.PROCEDURE, yytext(), "PALABRA RESERVADA"); }
+"PROGRAM"       { return crearSymbol(sym.PROGRAM, yytext(), "PALABRA RESERVADA"); }
+"RECORD"        { return crearSymbol(sym.RECORD, yytext(), "PALABRA RESERVADA"); }
+"REPEAT"        { return crearSymbol(sym.REPEAT, yytext(), "PALABRA RESERVADA"); }
+"SET"           { return crearSymbol(sym.SET, yytext(), "PALABRA RESERVADA"); }
+"SHL"           { return crearSymbol(sym.SHL, yytext(), "PALABRA RESERVADA"); }
+"SHR"           { return crearSymbol(sym.SHR, yytext(), "PALABRA RESERVADA"); }
+"STRING"        { return crearSymbol(sym.STRING, yytext(), "PALABRA RESERVADA"); }
+"THEN"          { return crearSymbol(sym.THEN, yytext(), "PALABRA RESERVADA"); }
+"TO"            { return crearSymbol(sym.TO, yytext(), "PALABRA RESERVADA"); }
+"TYPE"          { return crearSymbol(sym.TYPE, yytext(), "PALABRA RESERVADA"); }
+"UNIT"          { return crearSymbol(sym.UNIT, yytext(), "PALABRA RESERVADA"); }
+"UNTIL"         { return crearSymbol(sym.UNTIL, yytext(), "PALABRA RESERVADA"); }
+"USES"          { return crearSymbol(sym.USES, yytext(), "PALABRA RESERVADA"); }
+"VAR"           { return crearSymbol(sym.VAR, yytext(), "PALABRA RESERVADA"); }
+"VIRTUAL"       { return crearSymbol(sym.VIRTUAL, yytext(), "PALABRA RESERVADA"); }
+"WHILE"         { return crearSymbol(sym.WHILE, yytext(), "PALABRA RESERVADA"); }
+"WITH"          { return crearSymbol(sym.WITH, yytext(), "PALABRA RESERVADA"); }
+"XOR"           { return crearSymbol(sym.XOR, yytext(), "PALABRA RESERVADA"); }
+"INT"           { return crearSymbol(sym.INT, yytext(), "PALABRA RESERVADA"); }
+"CHAR"          { return crearSymbol(sym.CHAR, yytext(), "PALABRA RESERVADA"); }
+"READ"          { return crearSymbol(sym.READ, yytext(), "PALABRA RESERVADA"); }
+"REAL"          { return crearSymbol(sym.REAL, yytext(), "PALABRA RESERVADA"); }
+"WRITE"         { return crearSymbol(sym.WRITE, yytext(), "PALABRA RESERVADA"); }
+
+
+// ========== LITERALES NUMERICOS Y CADENAS ==========
+{NumeroRealIncorrecto} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", columna " + (yycolumn+1) +
+                ": número real incorrecto. Texto: " + yytext());
 }
 
-/* 5) Strings / Chars válidos */
-{STRING} {
-  TokenCollector.add("LITERAL_STRING", yytext(), yyline+1);
-  return sym(sym.STRING_LIT, yytext());
+{Octal}         { return crearSymbol(sym.LIT_OCTAL, yytext(), "LITERAL OCTAL"); }
+{Hexadecimal}   { return crearSymbol(sym.LIT_HEX, yytext(), "LITERAL HEXADECIMAL"); }
+{Decimal}       { return crearSymbol(sym.LIT_ENTERO, yytext(), "LITERAL ENTERO"); }
+{RealStrict}    { return crearSymbol(sym.LIT_REAL, yytext(), "LITERAL REAL"); }
+
+
+{StringSinCerrar} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", columna " + (yycolumn+1) +
+                ": string sin cerrar. Texto: " + yytext());
 }
-{CHAR} {
-  TokenCollector.add("LITERAL_CHAR", yytext(), yyline+1);
-  return sym(sym.CHAR_LIT, yytext());
+{StringIncorrecto} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", columna " + (yycolumn+1) +
+                ": string incorrecto. Texto: " + yytext());
 }
-
-/* 6) Incompletos (cuando llega fin de línea) */
-{STRING_INCOMP} / \r?\n { TokenCollector.addError("ERROR_STRING_SIN_CIERRE", yytext(), yyline+1); }
-{CHAR_INCOMP}   / \r?\n { TokenCollector.addError("ERROR_CHAR_SIN_CIERRE",   yytext(), yyline+1); }
-
-/* 7) Identificador con símbolo ilegal en medio (ERROR) */
-{ID_CON_SIM_ILLEGAL} {
-  TokenCollector.addError("ERROR_IDENTIFICADOR_SIMBOLO_ILEGAL", yytext(), yyline+1);
+{String}        { return crearSymbol(sym.LIT_STRING, yytext(), "LITERAL STRING"); }
+{CharInvalido} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", columna " + (yycolumn+1) +
+                ": carácter inválido. Texto: " + yytext());
 }
-
-/* 8) Palabras operadoras del parser */
-"AND" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.AND); }
-"OR"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.OR); }
-"NOT" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.NOT); }
-"DIV" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.DIV_KW); }
-"MOD" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.MOD_KW); }
-
-/* 9) Palabras operadoras extra de P1 (CUP las verá como IDENT) */
-{OPER_PALABRA_EXTRA} {
-  TokenCollector.add("OPERADOR", yytext(), yyline+1);
-  return sym(sym.IDENT, yytext());
+{CharSinCierre} {
+    errores.add("Error en línea " + (yyline+1) +
+                ", columna " + (yycolumn+1) +
+                ": carácter sin cerrar. Texto: " + yytext());
 }
+{Char}          { return crearSymbol(sym.LIT_CHAR, yytext(), "LITERAL CARACTER"); }
 
-/* 10) Reservadas del parser (todas antes que IDENT) */
-"PROGRAM"   { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.PROGRAM); }
-"VAR"       { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.VAR); }
-"BEGIN"     { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.BEGIN); }
-"END"       { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.END); }
-"IF"        { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.IF); }
-"THEN"      { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.THEN); }
-"ELSE"      { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.ELSE); }
-"WHILE"     { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.WHILE); }
-"DO"        { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.DO); }
-"FOR"       { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.FOR); }
-"TO"        { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.TO); }
-"FUNCTION"  { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.FUNCTION); }
-"PROCEDURE" { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.PROCEDURE); }
-"READ"      { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.READ); }
-"WRITE"     { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.WRITE); }
-"INT"       { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.INT); }
-"CHAR"      { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.CHAR); }
-"REAL"      { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.REAL); }
-"STRING"    { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.STRING); }
-"RETURN"    { TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1); return sym(sym.RETURN); }
 
-/* 11) Reservadas extra de P1 → IDENT para CUP (pero se registran como reservada) */
-{RES_P1_EXTRA} {
-  TokenCollector.add("PALABRA_RESERVADA", yytext(), yyline+1);
-  return sym(sym.IDENT, yytext());
+// ========== IDENTIFICADORES ==========
+{IdentificadorNumero} {
+    errores.add("Error en línea " + (yyline+1) + ", columna " + (yycolumn+1) + ": identificador inválido, no puede iniciar con un número. Texto: " + yytext());
+}
+{IdentificadorSimbolo} {
+    errores.add("Error en línea " + (yyline+1) + ", columna " + (yycolumn+1) + ": identificador inválido, no puede iniciar con símbolo. Texto: " + yytext());
+}
+{IdentificadorInvalido} {
+    errores.add("Error en línea " + (yyline+1) + ", columna " + (yycolumn+1) + ": identificador inválido, solo se permiten letras y dígitos. Texto: " + yytext());
+}
+{IdentificadorMuyLargo} {
+    errores.add("Error en línea " + (yyline+1) + ", columna " + (yycolumn+1) + ": identificador inválido, excede el máximo de 127 caracteres. Texto: " + yytext());
+}
+{Identificador} { return crearSymbol(sym.IDENTIFICADOR, yytext(), "IDENTIFICADOR"); }
+// ========== CUALQUIER OTRO ==========
+. {
+   errores.add("Error en línea " + (yyline+1) +
+               ", columna " + (yycolumn+1) +
+               ": " + yytext());
 }
 
-/* 12) Operadores y separadores SIMBÓLICOS (largos → cortos) */
-":=" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.ASSIGN); }
-"++" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.INCR); }
-"--" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.DECR); }
-"**" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.IDENT, yytext()); }  /* reporta pero CUP lo ignora */
-
-">=" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.GE); }
-"<=" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.LE); }
-"<>" { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.NE); }
-
-"^"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.CARET); }
-"+"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.PLUS); }
-"-"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.MINUS); }
-"*"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.TIMES); }
-"/"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.DIVIDE); }
-"="  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.EQ); }
-">"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.GT); }
-"<"  { TokenCollector.add("OPERADOR", yytext(), yyline+1); return sym(sym.LT); }
-
-"("  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.LPAREN); }
-")"  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.RPAREN); }
-"["  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.LBRACK); }
-"]"  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.RBRACK); }
-","  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.COMMA); }
-";"  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.SEMI); }
-":"  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.COLON); }
-"."  { TokenCollector.add("SEPARADOR", yytext(), yyline+1); return sym(sym.DOT); }
-
-/* 13) Identificador válido (validación de longitud aquí) */
-{ID_BASE} {
-  String s = yytext();
-  if (s.length() > 127) {
-    TokenCollector.addError("ERROR_IDENTIFICADOR_LONGITUD", s, yyline+1);
-    return sym(sym.IDENT, s);  // sigue el flujo
-  } else {
-    TokenCollector.add("IDENTIFICADOR", s, yyline+1);
-    return sym(sym.IDENT, s);
-  }
-}
-
-/* 14) Catch-all y EOF */
-.      { TokenCollector.addError("ERROR_LEXICO", yytext(), yyline+1); }
-<<EOF>>{ return sym(sym.EOF); }

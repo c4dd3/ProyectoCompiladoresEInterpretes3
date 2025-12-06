@@ -8,115 +8,189 @@ package parser;
 /** CUP generated class containing symbol constants. */
 public class sym {
   /* terminals */
-  public static final int DIV_KW = 24;
-  public static final int CHAR_LIT = 52;
-  public static final int DIVIDE = 22;
-  public static final int FUNCTION = 4;
-  public static final int CHAR = 35;
-  public static final int GE = 31;
-  public static final int SEMI = 42;
-  public static final int LPAREN = 37;
-  public static final int DECR = 46;
-  public static final int INCR = 45;
-  public static final int INT = 33;
-  public static final int FOR = 14;
-  public static final int MINUS = 20;
-  public static final int WRITE = 48;
-  public static final int RPAREN = 38;
-  public static final int NOT = 16;
-  public static final int AND = 17;
-  public static final int LT = 28;
-  public static final int OR = 18;
-  public static final int COMMA = 41;
-  public static final int BEGIN = 6;
-  public static final int PLUS = 19;
-  public static final int ASSIGN = 32;
-  public static final int IF = 9;
-  public static final int CARET = 25;
-  public static final int DOT = 44;
-  public static final int LE = 30;
+  public static final int INTERRUPT = 27;
+  public static final int IDENTIFICADOR = 90;
+  public static final int DIVISION = 64;
+  public static final int REAL = 59;
+  public static final int MENOR_IGUAL = 72;
+  public static final int PACKED = 35;
+  public static final int TYPE = 47;
+  public static final int CORCHETE_DER = 81;
+  public static final int READ = 58;
+  public static final int CONST = 8;
+  public static final int ASM = 5;
+  public static final int LIT_ENTERO = 84;
+  public static final int LIT_CHAR = 89;
+  public static final int PARENTESIS_DER = 79;
+  public static final int POTENCIA = 67;
+  public static final int UNTIL = 49;
+  public static final int MAYOR = 71;
+  public static final int CONSTRUCTOR = 9;
+  public static final int DIFERENTE = 69;
+  public static final int VIRTUAL = 52;
+  public static final int POR = 63;
+  public static final int SHR = 43;
+  public static final int NOT = 31;
+  public static final int NIL = 30;
+  public static final int ARRAY = 4;
+  public static final int OBJECT = 32;
+  public static final int SHL = 42;
+  public static final int VAR = 51;
+  public static final int INLINE = 25;
+  public static final int THEN = 45;
+  public static final int GOTO = 21;
+  public static final int DOS_PUNTOS = 77;
+  public static final int EXTERNAL = 16;
+  public static final int RECORD = 39;
+  public static final int PUNTO_COMA = 75;
+  public static final int MOD = 29;
+  public static final int INCREMENTO = 65;
+  public static final int COMA = 76;
+  public static final int WRITE = 60;
+  public static final int IGUAL = 68;
+  public static final int UNIT = 48;
+  public static final int WHILE = 53;
+  public static final int IMPLEMENTATION = 23;
+  public static final int CORCHETE_IZQ = 80;
+  public static final int INTERFACE = 26;
+  public static final int CHAR = 57;
+  public static final int DO = 12;
+  public static final int FOR = 18;
+  public static final int PARENTESIS_IZQ = 78;
+  public static final int LIT_HEX = 87;
+  public static final int DECREMENTO = 66;
+  public static final int DIV = 11;
+  public static final int LIT_STRING = 88;
+  public static final int PUNTERO = 83;
+  public static final int DOWNTO = 13;
+  public static final int ELSE = 14;
+  public static final int MENOS = 62;
+  public static final int MENOR = 70;
+  public static final int MAS = 61;
+  public static final int PROCEDURE = 37;
+  public static final int INT = 56;
+  public static final int LIT_REAL = 85;
   public static final int EOF = 0;
-  public static final int RETURN = 8;
+  public static final int PUNTO = 82;
+  public static final int FUNCTION = 20;
+  public static final int REPEAT = 40;
+  public static final int LABEL = 28;
+  public static final int DESTRUCTOR = 10;
+  public static final int IN = 24;
+  public static final int OR = 34;
+  public static final int SET = 41;
   public static final int error = 1;
-  public static final int PROGRAM = 2;
-  public static final int IDENT = 49;
-  public static final int EQ = 26;
-  public static final int LBRACK = 39;
-  public static final int MOD_KW = 23;
-  public static final int REAL = 34;
-  public static final int TIMES = 21;
-  public static final int COLON = 43;
-  public static final int ELSE = 11;
-  public static final int READ = 47;
-  public static final int RBRACK = 40;
-  public static final int TO = 15;
-  public static final int WHILE = 12;
-  public static final int REAL_LIT = 51;
-  public static final int THEN = 10;
-  public static final int NE = 27;
-  public static final int END = 7;
-  public static final int STRING = 36;
-  public static final int STRING_LIT = 53;
-  public static final int INT_LIT = 50;
-  public static final int GT = 29;
-  public static final int VAR = 3;
-  public static final int PROCEDURE = 5;
-  public static final int DO = 13;
+  public static final int LIT_OCTAL = 86;
+  public static final int IF = 22;
+  public static final int OF = 33;
+  public static final int END = 15;
+  public static final int FILE = 17;
+  public static final int ASIGNACION = 74;
+  public static final int BEGIN = 6;
+  public static final int CASE = 7;
+  public static final int FORWARD = 19;
+  public static final int STRING = 44;
+  public static final int ABSOLUTE = 2;
+  public static final int PROGRAM = 38;
+  public static final int AND = 3;
+  public static final int PRIVATE = 36;
+  public static final int TO = 46;
+  public static final int WITH = 54;
+  public static final int MAYOR_IGUAL = 73;
+  public static final int USES = 50;
+  public static final int XOR = 55;
   public static final String[] terminalNames = new String[] {
   "EOF",
   "error",
-  "PROGRAM",
-  "VAR",
-  "FUNCTION",
-  "PROCEDURE",
-  "BEGIN",
-  "END",
-  "RETURN",
-  "IF",
-  "THEN",
-  "ELSE",
-  "WHILE",
-  "DO",
-  "FOR",
-  "TO",
-  "NOT",
+  "ABSOLUTE",
   "AND",
+  "ARRAY",
+  "ASM",
+  "BEGIN",
+  "CASE",
+  "CONST",
+  "CONSTRUCTOR",
+  "DESTRUCTOR",
+  "DIV",
+  "DO",
+  "DOWNTO",
+  "ELSE",
+  "END",
+  "EXTERNAL",
+  "FILE",
+  "FOR",
+  "FORWARD",
+  "FUNCTION",
+  "GOTO",
+  "IF",
+  "IMPLEMENTATION",
+  "IN",
+  "INLINE",
+  "INTERFACE",
+  "INTERRUPT",
+  "LABEL",
+  "MOD",
+  "NIL",
+  "NOT",
+  "OBJECT",
+  "OF",
   "OR",
-  "PLUS",
-  "MINUS",
-  "TIMES",
-  "DIVIDE",
-  "MOD_KW",
-  "DIV_KW",
-  "CARET",
-  "EQ",
-  "NE",
-  "LT",
-  "GT",
-  "LE",
-  "GE",
-  "ASSIGN",
-  "INT",
-  "REAL",
-  "CHAR",
+  "PACKED",
+  "PRIVATE",
+  "PROCEDURE",
+  "PROGRAM",
+  "RECORD",
+  "REPEAT",
+  "SET",
+  "SHL",
+  "SHR",
   "STRING",
-  "LPAREN",
-  "RPAREN",
-  "LBRACK",
-  "RBRACK",
-  "COMMA",
-  "SEMI",
-  "COLON",
-  "DOT",
-  "INCR",
-  "DECR",
+  "THEN",
+  "TO",
+  "TYPE",
+  "UNIT",
+  "UNTIL",
+  "USES",
+  "VAR",
+  "VIRTUAL",
+  "WHILE",
+  "WITH",
+  "XOR",
+  "INT",
+  "CHAR",
   "READ",
+  "REAL",
   "WRITE",
-  "IDENT",
-  "INT_LIT",
-  "REAL_LIT",
-  "CHAR_LIT",
-  "STRING_LIT"
+  "MAS",
+  "MENOS",
+  "POR",
+  "DIVISION",
+  "INCREMENTO",
+  "DECREMENTO",
+  "POTENCIA",
+  "IGUAL",
+  "DIFERENTE",
+  "MENOR",
+  "MAYOR",
+  "MENOR_IGUAL",
+  "MAYOR_IGUAL",
+  "ASIGNACION",
+  "PUNTO_COMA",
+  "COMA",
+  "DOS_PUNTOS",
+  "PARENTESIS_IZQ",
+  "PARENTESIS_DER",
+  "CORCHETE_IZQ",
+  "CORCHETE_DER",
+  "PUNTO",
+  "PUNTERO",
+  "LIT_ENTERO",
+  "LIT_REAL",
+  "LIT_OCTAL",
+  "LIT_HEX",
+  "LIT_STRING",
+  "LIT_CHAR",
+  "IDENTIFICADOR"
   };
 }
 

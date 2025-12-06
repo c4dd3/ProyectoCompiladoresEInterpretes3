@@ -1,398 +1,463 @@
+/* ====== Parser para Pascal ABS - Con Recuperacion de Errores ====== */
+package parser;
 import java_cup.runtime.*;
+import java.util.ArrayList;
 
-
-/* ===================== CÓDIGO DEL PARSER ===================== */
 parser code {:
-  private String symToName(int id) {
-    try {
-      for (java.lang.reflect.Field f : parser.sym.class.getFields())
-        if (f.getInt(null)==id) return f.getName();
-    } catch (Exception ignore) {}
-    return String.valueOf(id);
-  }
+    // Lista para almacenar errores sintacticos
+    private ArrayList<String> erroresSintacticos = new ArrayList<>();
+    private int errorCount = 0;
+    private static final int MAX_ERRORS = 50; // Limite de errores antes de abortar
+    
+    public ArrayList<String> getErroresSintacticos() {
+        return erroresSintacticos;
+    }
+    
+    // Metodo mejorado para reportar errores sintacticos con contexto
+    public void report_error(String message, Object info) {
+        if (errorCount >= MAX_ERRORS) {
+            return; // Evitar reportar demasiados errores
+        }
+        
+        if (info instanceof Symbol) {
+            Symbol s = (Symbol)info;
+            int line = (s.left >= 0 ? s.left + 1 : 1);
+            int column = (s.right >= 0 ? s.right + 1 : 1);
+            
+            String errorMsg = String.format("Linea %d, Columna %d: %s", line, column, message);
+            
+            // Evitar errores duplicados
+            if (!erroresSintacticos.contains(errorMsg)) {
+                erroresSintacticos.add(errorMsg);
+                errorCount++;
+            }
+        } else {
+            String errorMsg = "Error sintactico: " + message;
+            erroresSintacticos.add(errorMsg);
+            errorCount++;
+        }
+    }
+    
+    public void report_fatal_error(String message, Object info) {
+        report_error("Error fatal: " + message, info);
+    }
+    
+    // Metodo mejorado con mensajes mas descriptivos
+    public void syntax_error(Symbol cur_token) {
+        String tokenValue = (cur_token.value != null ? cur_token.value.toString() : "fin de archivo");
+        String errorMsg = String.format(
+            "Token inesperado '%s'. Verifique la sintaxis del programa", 
+            tokenValue
+        );
+        report_error(errorMsg, cur_token);
+    }
+    
+    public void unrecovered_syntax_error(Symbol cur_token) {
+        String tokenValue = (cur_token.value != null ? cur_token.value.toString() : "fin de archivo");
+        String errorMsg = String.format(
+            "Error de sintaxis irrecuperable en '%s'. El analisis no puede continuar desde este punto", 
+            tokenValue
+        );
+        report_error(errorMsg, cur_token);
+    }
+    
+    // Metodo auxiliar para reportar errores especificos
+    public void reportarErrorEspecifico(String contexto, String esperado, String encontrado, Symbol s) {
+        String errorMsg = String.format(
+            "%s: Se esperaba %s, pero se encontro '%s'",
+            contexto, esperado, encontrado
+        );
+        report_error(errorMsg, s);
+    }
 
-  private void addSyn(int line, int col, String msg, int tokenId, String ctx){
-    parser.SyntaxErrorCollector.add(line, col, msg, symToName(tokenId), ctx);
-  }
+:}
 
-  @Override
-  public void report_error(String message, Object info) {
-    java_cup.runtime.Symbol s = (java_cup.runtime.Symbol) info;
-    addSyn(s.left+1, s.right+1, message, s.sym, "report_error");
-  }
+/* ========== TODOS LOS TERMINALES DEL JFLEX ========== */
+terminal 
+    /* Palabras reservadas COMPLETAS */
+    ABSOLUTE, AND, ARRAY, ASM, BEGIN, CASE, CONST, CONSTRUCTOR,
+    DESTRUCTOR, DIV, DO, DOWNTO, ELSE, END, EXTERNAL, FILE, FOR, 
+    FORWARD, FUNCTION, GOTO, IF, IMPLEMENTATION, IN, INLINE, INTERFACE, 
+    INTERRUPT, LABEL, MOD, NIL, NOT, OBJECT, OF, OR, PACKED, PRIVATE, 
+    PROCEDURE, PROGRAM, RECORD, REPEAT, SET, SHL, SHR, STRING, THEN, 
+    TO, TYPE, UNIT, UNTIL, USES, VAR, VIRTUAL, WHILE, WITH, XOR,
+    INT, CHAR, READ, REAL, WRITE,
 
-  @Override
-  public void syntax_error(java_cup.runtime.Symbol cur_token) {
-    addSyn(cur_token.left+1, cur_token.right+1, "Token inesperado", cur_token.sym, "syntax_error");
-  }
+    /* Operadores y simbolos COMPLETOS */
+    MAS, MENOS, POR, DIVISION, INCREMENTO, DECREMENTO, POTENCIA,
+    IGUAL, DIFERENTE, MENOR, MAYOR, MENOR_IGUAL, MAYOR_IGUAL,
+    ASIGNACION, PUNTO_COMA, COMA, DOS_PUNTOS, PARENTESIS_IZQ, 
+    PARENTESIS_DER, CORCHETE_IZQ, CORCHETE_DER, PUNTO, PUNTERO,
+    
+    /* Literales COMPLETOS */
+    LIT_ENTERO, LIT_REAL, LIT_OCTAL, LIT_HEX, LIT_STRING, LIT_CHAR,
+    
+    /* Identificadores */
+    IDENTIFICADOR;
 
-  @Override
-  public void report_fatal_error(String message, Object info) {
-    java_cup.runtime.Symbol s = (java_cup.runtime.Symbol) info;
-    addSyn(s.left+1, s.right+1, "Fatal: "+message, s.sym, "fatal");
-    // No lanzamos excepción: dejamos a CUP intentar recuperar.
-  }
+/* ========== REGLAS DE PRODUCCION - NON TERMINALS ========== */
+non terminal
+    // Estructura del Programa
+    inicio,
+    programa,
+    
+    // Declaracion de Variables
+    variables_globales,
+    lista_declaraciones_globales,
+    declaracion_variable_global,
+    lista_identificadores,
+    mas_identificadores,
+    
+    // Declaracion de Funciones y Procedures
+    funciones_globales,
+    funcion_global,
+    procedure_global,
+    parametros,
+    mas_parametros,
+    cuerpo_funcion,
+    cuerpo_procedure,
+    bloque_funcion,
+    bloque_procedure,
+    retorno,
+    
+    // Sentencias
+    sentencias,
+    sentencia,
+    sentencias_main,
+    sentencia_main,
+    
+    // Expresiones Aritmeticas
+    expresion,
+    termino,
+    factor,
+    
+    // Expresiones Booleanas (Condiciones)
+    condicion,
+    condicion_and,
+    condicion_not,
+    condicion_relacional,
+    
+    // Estructuras de Control
+    estructura_control,
+    while_stmt,
+    for_stmt,
+    if_stmt,
+    
+    // READ y WRITE
+    read_stmt,
+    write_stmt,
+    
+    // Llamadas a funciones
+    llamada_funcion,
+    lista_expresiones,
+    mas_expresiones,
+    
+    // Tipos de datos
+    tipo,
+    
+    // Main
+    cuerpo_main;
 
-  @Override
-  public void unrecovered_syntax_error(java_cup.runtime.Symbol cur_token) throws java.lang.Exception {
-    addSyn(cur_token.left+1, cur_token.right+1, "No se pudo recuperar", cur_token.sym, "abort");
-  }
-:};
-
-
-/* ===================== TERMINALES ===================== */
-terminal PROGRAM, VAR, FUNCTION, PROCEDURE, BEGIN, END, RETURN;
-terminal IF, THEN, ELSE, WHILE, DO, FOR, TO, NOT, AND, OR;
-terminal PLUS, MINUS, TIMES, DIVIDE;
-terminal MOD_KW, DIV_KW;
-terminal CARET;
-terminal EQ, NE, LT, GT, LE, GE, ASSIGN;
-terminal INT, REAL, CHAR, STRING;
-terminal LPAREN, RPAREN, LBRACK, RBRACK, COMMA, SEMI, COLON, DOT;
-terminal INCR, DECR;
-terminal READ, WRITE;
-terminal String IDENT;
-terminal String INT_LIT, REAL_LIT, CHAR_LIT, STRING_LIT;
-
-
-/* ===================== NO TERMINALES ===================== */
-non terminal program, globals_opt, decl_list, decl, type;
-non terminal funcs_opt, func_or_proc, function, procedure;
-non terminal main_block, stmt_list, stmt;
-non terminal assign, call_stmt, expr, bool_expr;
-non terminal param_list_opt, param_list, param;
-non terminal while_stmt, for_stmt;
-non terminal ident_list, arg_list_opt, arg_list;
-non terminal if_stmt;
-non terminal read_stmt, write_stmt;
-non terminal block;
-non terminal decl_section;
-non terminal ret_stmt;
-non terminal incdec_stmt;
-
-
-/* ===================== PRECEDENCIAS ===================== */
+/* ========== PRECEDENCIAS DE OPERADORES ========== */
+// Precedencia de operadores booleanos (menor a mayor)
 precedence left OR;
 precedence left AND;
 precedence right NOT;
-precedence nonassoc EQ, NE, LT, GT, LE, GE;
-precedence left PLUS, MINUS;
-precedence left CARET;
-precedence left TIMES, DIVIDE, MOD_KW, DIV_KW;
+
+// Precedencia de operadores relacionales
+precedence left IGUAL, DIFERENTE, MENOR, MAYOR, MENOR_IGUAL, MAYOR_IGUAL;
+
+// Precedencia de operadores aritmeticos (menor a mayor)
+precedence left MAS, MENOS;
+precedence left POR, DIVISION, DIV, MOD;
+precedence right INCREMENTO, DECREMENTO;
+precedence left POTENCIA;
+
+/* ========== INICIO ========== */
+start with inicio;
+
+inicio ::= programa;
+
+/* ========== Estructura del Programa ========== */
+programa ::= PROGRAM IDENTIFICADOR variables_globales funciones_globales cuerpo_main
+           | PROGRAM IDENTIFICADOR variables_globales funciones_globales cuerpo_main PUNTO
+           | PROGRAM error variables_globales funciones_globales cuerpo_main
+             {: parser.report_error("Falta el nombre del programa despues de PROGRAM", null); :}
+           | error
+             {: parser.report_error("Falta palabra clave PROGRAM al inicio del archivo", null); :}
+           ;
+
+/* ========== Declaracion de Variables Globales ========== */
+variables_globales ::= VAR lista_declaraciones_globales
+                     | /* vacío */   
+                     ;
+
+lista_declaraciones_globales ::= declaracion_variable_global
+                                | lista_declaraciones_globales declaracion_variable_global
+                                ;
+
+declaracion_variable_global ::= lista_identificadores DOS_PUNTOS tipo PUNTO_COMA
+                               | lista_identificadores DOS_PUNTOS error PUNTO_COMA
+                                 {: parser.report_error("Tipo de dato invalido o faltante en declaracion de variable. Use: INT, REAL, STRING o CHAR", null); :}
+                               | lista_identificadores error tipo PUNTO_COMA
+                                 {: parser.report_error("Falta ':' en declaracion de variable. Formato correcto: 'variable : TIPO;'", null); :}
+                               ;
+
+lista_identificadores ::= IDENTIFICADOR mas_identificadores
+                        ;
+
+mas_identificadores ::= COMA IDENTIFICADOR mas_identificadores
+                      | /* vacío */
+                      ;
+
+/* ========== Declaracion de Funciones y Procedures ========== */
+funciones_globales ::= funcion_global funciones_globales
+                     | procedure_global funciones_globales
+                     | /* epsilon */
+                     ;
+
+/* ========== FUNCTION ========== */
+funcion_global ::= FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS tipo cuerpo_funcion
+                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros error DOS_PUNTOS tipo cuerpo_funcion
+                   {: parser.report_error("Falta ')' en declaracion de parametros de funcion", null); :}
+                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error tipo cuerpo_funcion
+                   {: parser.report_error("Falta ':' antes del tipo de retorno de funcion", null); :}
+                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error cuerpo_funcion
+                   {: parser.report_error("Tipo de retorno invalido en funcion. Use: INT, REAL, STRING o CHAR", null); :}
+                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error cuerpo_funcion
+                   {: parser.report_error("Falta ':' y tipo de retorno en declaracion de funcion", null); :}
+                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS tipo error END
+                   {: parser.report_error("Falta BEGIN en cuerpo de funcion", null); :}
+                 | FUNCTION error cuerpo_funcion
+                   {: parser.report_error("Error en declaracion de funcion. Formato: 'FUNCTION nombre(parametros): TIPO BEGIN ... END'", null); :}
+                 ;
+
+parametros ::= tipo IDENTIFICADOR mas_parametros
+             | /* epsilon */
+             ;
+
+mas_parametros ::= COMA tipo IDENTIFICADOR mas_parametros
+                 | /* epsilon */
+                 ;
+
+cuerpo_funcion ::= BEGIN bloque_funcion END 
+                  | VAR lista_declaraciones_globales BEGIN bloque_funcion END
+                 ;
+
+bloque_funcion ::= sentencias retorno
+                 | retorno
+                 | sentencias error
+                   {: parser.report_error("Falta RETURN en cuerpo de funcion", null); :}
+                 | error 
+                   {: parser.report_error("Falta RETURN en cuerpo de funcion", null); :}
+                 ;
+
+retorno ::= IDENTIFICADOR ASIGNACION expresion //PUNTO_COMA
+          ;
+
+/* ========== PROCEDURE ========== */
+procedure_global ::= PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error tipo cuerpo_procedure
+                     {: parser.report_error("Un procedimiento no debe tener tipo de retorno. Use FUNCTION si requiere devolver un valor", null); :}
+                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error cuerpo_procedure
+                     {: parser.report_error("Un procedimiento no debe tener tipo de retorno. Use FUNCTION si requiere devolver un valor", null); :}
+                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER cuerpo_procedure
+                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros error cuerpo_procedure
+                     {: parser.report_error("Falta ')' en declaracion de parametros de procedimiento", null); :}
+                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error END
+                     {: parser.report_error("Falta BEGIN en cuerpo de procedimiento", null); :}
+                   | PROCEDURE error cuerpo_procedure
+                     {: parser.report_error("Error en declaracion de procedimiento. Formato: 'PROCEDURE nombre(parametros) BEGIN ... END'", null); :}
+                   ;
+
+cuerpo_procedure ::= BEGIN bloque_procedure END
+                    | VAR lista_declaraciones_globales BEGIN bloque_procedure END
+                   ;
+
+bloque_procedure ::= sentencias retorno error
+                     {: parser.report_error("Un procedimiento no debe contener sentencia RETURN. Use FUNCTION si desea devolver un valor", null); :}
+                   | retorno error
+                     {: parser.report_error("Un procedimiento no debe contener sentencia RETURN. Use FUNCTION si desea devolver un valor", null); :}
+                   | sentencias
+                   | /* vacío */
+                   ;
+
+/* ========== Sentencias (dentro de funciones/procedures) ========== */
+sentencias ::= sentencia
+             | sentencias sentencia
+             ;
+
+sentencia ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
+            | estructura_control
+            | llamada_funcion PUNTO_COMA
+            | read_stmt
+            | write_stmt
+            | IDENTIFICADOR INCREMENTO PUNTO_COMA
+            | IDENTIFICADOR DECREMENTO PUNTO_COMA
+            | error PUNTO_COMA
+              {: parser.report_error("Error en sentencia. Verifique asignaciones, llamadas a funciones o estructuras de control", null); :}
+            ;
+
+/* ========== Cuerpo del Main ========== */
+cuerpo_main ::= BEGIN sentencias_main END
+              | BEGIN END
+              | error sentencias_main END
+                {: parser.report_error("Error en el cuerpo del programa principal", null); :}
+              | error END
+                {: parser.report_error("Error en el cuerpo del programa principal", null); :}
+              | BEGIN sentencias_main error
+                {: parser.report_error("Error en el cuerpo del programa principal", null); :}
+              | BEGIN error
+                {: parser.report_error("Error en el cuerpo del programa principal", null); :}
+              ;
+
+sentencias_main ::= sentencia_main
+                  | sentencias_main sentencia_main
+                  ;
+
+sentencia_main ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
+                 | estructura_control
+                 | llamada_funcion PUNTO_COMA
+                 | read_stmt
+                 | write_stmt
+                 | IDENTIFICADOR INCREMENTO PUNTO_COMA
+                 | IDENTIFICADOR DECREMENTO PUNTO_COMA
+                 | funcion_global
+                 | procedure_global
+                 | error PUNTO_COMA
+                   {: parser.report_error("Error en sentencia del programa principal", null); :}
+                 ;
+
+/* ========== EXPRESIONES ARITMETICAS ========== */
+expresion ::= expresion MAS termino
+            | expresion MENOS termino
+            | termino
+            ;
+
+termino ::= termino POR factor
+          | termino DIVISION factor
+          | termino DIV factor
+          | termino MOD factor
+          | factor
+          ;
+
+factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
+         | IDENTIFICADOR
+         | llamada_funcion
+         | LIT_ENTERO
+         | LIT_REAL
+         | LIT_OCTAL
+         | LIT_HEX
+         | LIT_STRING
+         | LIT_CHAR
+         | MENOS factor
+         | MAS factor
+         | IDENTIFICADOR INCREMENTO
+         | IDENTIFICADOR DECREMENTO
+         | INCREMENTO IDENTIFICADOR
+         | DECREMENTO IDENTIFICADOR
+         ;
+
+/* ========== EXPRESIONES BOOLEANAS (CONDICIONES) ========== */
+condicion ::= condicion OR condicion_and
+            | condicion_and
+            ;
+
+condicion_and ::= condicion_and AND condicion_not
+                | condicion_not
+                ;
+
+condicion_not ::= NOT condicion_not
+                | condicion_relacional
+                ;
+
+condicion_relacional ::= expresion IGUAL expresion
+                       | expresion DIFERENTE expresion
+                       | expresion MENOR expresion
+                       | expresion MAYOR expresion
+                       | expresion MENOR_IGUAL expresion
+                       | expresion MAYOR_IGUAL expresion
+                       | PARENTESIS_IZQ condicion PARENTESIS_DER
+                       ;
+
+/* ========== ESTRUCTURAS DE CONTROL ========== */
+estructura_control ::= while_stmt
+                     | for_stmt
+                     | if_stmt
+                     ;
+
+while_stmt ::= WHILE condicion DO BEGIN sentencias_main END
+             | WHILE condicion error BEGIN sentencias_main END
+               {: parser.report_error("Error en la estructura del WHILE", null); :}
+             | WHILE condicion DO error END
+               {: parser.report_error("Error en la estructura del WHILE", null); :}
+             | WHILE error DO BEGIN sentencias_main END
+               {: parser.report_error("Error en la estructura del WHILE", null); :}
+             ;
+
+for_stmt ::= FOR IDENTIFICADOR ASIGNACION expresion TO expresion DO BEGIN sentencias_main END
+           | FOR IDENTIFICADOR error expresion TO expresion DO BEGIN sentencias_main END
+             {: parser.report_error("Falta ':=' en FOR. Formato: 'FOR variable := inicio TO fin DO BEGIN ... END'", null); :}
+           | FOR IDENTIFICADOR ASIGNACION expresion error expresion DO BEGIN sentencias_main END
+             {: parser.report_error("Falta TO en FOR. Formato: 'FOR variable := inicio TO fin DO BEGIN ... END'", null); :}
+           | FOR IDENTIFICADOR ASIGNACION expresion TO expresion error BEGIN sentencias_main END
+             {: parser.report_error("Falta DO en FOR. Formato: 'FOR variable := inicio TO fin DO BEGIN ... END'", null); :}
+           | FOR IDENTIFICADOR ASIGNACION expresion TO expresion DO error END
+             {: parser.report_error("Falta BEGIN en cuerpo de FOR", null); :}
+           | FOR error DO BEGIN sentencias_main END
+             {: parser.report_error("Error en declaracion de FOR. Formato: 'FOR variable := inicio TO fin DO BEGIN ... END'", null); :}
+           ;
+
+if_stmt ::= IF condicion THEN BEGIN sentencias_main END
+          | IF condicion THEN BEGIN sentencias_main END ELSE BEGIN sentencias_main END
+          | IF error BEGIN sentencias_main END
+            {: parser.report_error("Error en la estructura del IF", null); :}
+          | IF condicion THEN error sentencias_main END
+            {: parser.report_error("Error en la estructura del IF", null); :}
+          | IF condicion THEN BEGIN sentencias_main error
+            {: parser.report_error("Error en la estructura del IF", null); :}
+          | IF condicion THEN BEGIN sentencias_main END ELSE BEGIN error END
+            {: parser.report_error("Error en la estructura del IF ELSE", null); :}
+          | IF condicion THEN BEGIN sentencias_main END ELSE error sentencias_main END
+            {: parser.report_error("Error en la estructura del IF ELSE", null); :}
+          ;
+
+/* ========== READ Y WRITE ========== */
+read_stmt ::=
+              READ PARENTESIS_IZQ PARENTESIS_DER PUNTO_COMA
+            | READ PARENTESIS_IZQ IDENTIFICADOR PARENTESIS_DER PUNTO_COMA
+            | READ PARENTESIS_IZQ IDENTIFICADOR COMA error PARENTESIS_DER PUNTO_COMA
+                {: parser.report_error("Error: 'READ' solo acepta una variable. Formato correcto: READ(variable);", null); :}
+            | READ PARENTESIS_IZQ error PARENTESIS_DER PUNTO_COMA
+                {: parser.report_error("Argumento inválido en READ. Use un identificador de variable", null); :}
+            | READ error PUNTO_COMA
+                {: parser.report_error("Falta '(' después de READ. Formato: 'READ();' o 'READ(variable);'", null); :}
+            | READ PARENTESIS_IZQ IDENTIFICADOR error PUNTO_COMA
+                {: parser.report_error("Falta ')' después del identificador en READ", null); :}
+            ;
 
 
-/* ===================== PROGRAMA ===================== */
-program ::=
-    PROGRAM IDENT globals_opt funcs_opt main_block
-  | error main_block
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Cabecera de programa invalida; recuperado en main", t);
-    :}
-;
+write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones PARENTESIS_DER PUNTO_COMA
+             | WRITE PARENTESIS_IZQ error PARENTESIS_DER PUNTO_COMA
+               {: parser.report_error("Expresion invalida en WRITE, debe tener por lo menos un parametro. Use expresiones, variables o literales", null); :}
+             | WRITE error PUNTO_COMA
+               {: parser.report_error("Falta '(' despues de WRITE. Formato: 'WRITE(exp1, exp2, ...);'", null); :}
+             ;
 
+/* ========== LLAMADAS A FUNCIONES ========== */
+llamada_funcion ::= IDENTIFICADOR PARENTESIS_IZQ lista_expresiones PARENTESIS_DER
+                  | IDENTIFICADOR PARENTESIS_IZQ PARENTESIS_DER
+                  ;
 
-/* ===================== VARIABLES GLOBALES ===================== */
-globals_opt ::=
-      /* vacío */
-    | VAR decl_list
-;
+lista_expresiones ::= expresion mas_expresiones
+                    ;
 
-decl_list ::= decl
-            | decl_list decl
-;
+mas_expresiones ::= COMA expresion mas_expresiones
+                  | /* vacío */
+                  ;
 
-decl ::= ident_list COLON type SEMI
-       /* tipo inválido */
-       | ident_list COLON error SEMI
-         {:
-           java_cup.runtime.Symbol t = parser.cur_token;
-           addSyn(t.left+1, t.right+1,
-                  "Tipo inválido en declaración; recuperado en ';'",
-                  t.sym, "decl");
-         :}
-       /* falta ':' entre la lista de idents y el tipo */
-       | ident_list error type SEMI
-         {:
-           java_cup.runtime.Symbol t = parser.cur_token;
-           addSyn(t.left+1, t.right+1,
-                  "Falta ':' en declaración; recuperado en tipo",
-                  t.sym, "decl");
-         :}
-;
-
-ident_list ::= IDENT
-             | ident_list COMMA IDENT
-             | ident_list COMMA error   /* coma colgante */
-               {:
-                 java_cup.runtime.Symbol t = parser.cur_token;
-                 report_error("Identificador faltante tras ','; recuperado", t);
-               :}
-;
-
-type ::= INT
-       | REAL
+/* ========== TIPOS DE DATOS ========== */
+tipo ::= INT
        | CHAR
+       | REAL
        | STRING
-;
-
-
-/* ===================== FUNCIONES/PROCEDIMIENTOS ===================== */
-funcs_opt ::=
-      /* vacío */
-    | funcs_opt func_or_proc
-;
-
-func_or_proc ::= function
-               | procedure
-;
-
-function ::= FUNCTION IDENT LPAREN param_list_opt RPAREN COLON type
-             BEGIN block END
-           | FUNCTION IDENT LPAREN param_list_opt RPAREN
-             BEGIN block END
-;
-
-procedure ::= PROCEDURE IDENT LPAREN param_list_opt RPAREN 
-              BEGIN block END
-;
-
-
-/* ===================== MAIN ===================== */
-main_block ::= BEGIN block END;
-
-
-/* ===================== BLOQUES ===================== */
-block ::= decl_section stmt_list
-        | decl_section error
-          {:
-            java_cup.runtime.Symbol t = parser.cur_token;
-            addSyn(t.left+1, t.right+1,
-                   "Bloque invalido; recuperado en END",
-                   t.sym, "block");
-          :}
-;
-
-decl_section ::=
-      /* vacío */
-    | VAR decl_list
-    | VAR error SEMI
-      {:
-        java_cup.runtime.Symbol t = parser.cur_token;
-        addSyn(t.left+1, t.right+1,
-               "Declaracion local invalida; recuperado en ';'",
-               t.sym, "decl-section");
-      :}
-;
-
-
-/* ===================== SENTENCIAS ===================== */
-stmt_list ::= stmt
-            | stmt_list stmt
-;
-
-stmt ::=
-    assign SEMI
-  | call_stmt SEMI
-  | read_stmt SEMI
-  | write_stmt SEMI
-  | if_stmt
-  | while_stmt
-  | for_stmt
-  | incdec_stmt SEMI
-  | error SEMI
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Sentencia invalida; recuperado", t);
-    :}
-  | ret_stmt
-;
-
-assign ::= IDENT ASSIGN expr;
-
-incdec_stmt ::=
-    INCR IDENT
-  | IDENT INCR
-  | DECR IDENT
-  | IDENT DECR
-;
-
-call_stmt ::= IDENT LPAREN arg_list_opt RPAREN;
-
-read_stmt ::= READ LPAREN RPAREN
-            | READ LPAREN expr RPAREN
-;
-
-write_stmt ::= WRITE LPAREN arg_list RPAREN
-             | WRITE LPAREN arg_list COMMA RPAREN
-               {:
-                 java_cup.runtime.Symbol t = parser.cur_token;
-                 report_error("Argumento faltante antes de ')'; recuperado", t);
-               :}
-             | WRITE LPAREN error RPAREN
-               {:
-                 java_cup.runtime.Symbol t = parser.cur_token;
-                 report_error("Lista de argumentos invalida; recuperado en ')'", t);
-               :}
-;
-
-
-/* ===================== ARGUMENTOS/PARAMETROS ===================== */
-arg_list_opt ::=
-      /* vacío */
-    | arg_list
-    | error
-      {:
-        java_cup.runtime.Symbol t = parser.cur_token;
-        report_error("Lista de argumentos invalida; recuperado en ')'", t);
-      :}
-;
-
-arg_list ::= expr
-           | arg_list COMMA expr
-           | arg_list COMMA error
-             {:
-               java_cup.runtime.Symbol t = parser.cur_token;
-               report_error("Argumento faltante tras ','; recuperado", t);
-             :}
-;
-
-param_list_opt ::=
-      /* vacío */
-    | param_list
-    | error
-      {:
-        java_cup.runtime.Symbol t = parser.cur_token;
-        report_error("Lista de parametros invalida; recuperado en ')'", t);
-      :}
-;
-
-param_list ::= param
-             | param_list COMMA param
-;
-
-param ::= type IDENT;
-
-
-/* ===================== EXPRESIONES ===================== */
-expr ::= expr LBRACK expr RBRACK
-       | expr CARET expr
-       | expr PLUS expr
-       | expr MINUS expr
-       | expr TIMES expr
-       | expr DIVIDE expr
-       | expr MOD_KW expr
-       | expr DIV_KW expr
-       | IDENT
-       | IDENT LPAREN arg_list_opt RPAREN
-       | INT_LIT
-       | REAL_LIT
-       | CHAR_LIT
-       | STRING_LIT
-       | LPAREN expr RPAREN
-       | INCR IDENT
-       | IDENT INCR
-       | DECR IDENT
-       | IDENT DECR
-;
-
-bool_expr ::= NOT bool_expr
-            | bool_expr AND bool_expr
-            | bool_expr OR  bool_expr
-            | expr EQ expr
-            | expr NE expr
-            | expr LT expr
-            | expr LE expr
-            | expr GT expr
-            | expr GE expr
-            | LPAREN bool_expr RPAREN
-;
-
-
-/* ===================== CONTROL DE FLUJO ===================== */
-if_stmt ::=
-    IF bool_expr THEN BEGIN stmt_list END
-  | IF bool_expr THEN BEGIN stmt_list END ELSE BEGIN stmt_list END
-
-  | IF bool_expr BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta THEN en IF; asumido", t);
-    :}
-  | IF bool_expr BEGIN stmt_list END ELSE BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta THEN en IF; asumido", t);
-    :}
-
-  | IF bool_expr error BEGIN stmt_list END
-     {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta THEN en IF; recuperado en BEGIN", t);
-    :}
-  | IF bool_expr THEN error stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta BEGIN tras THEN; recuperado en END", t);
-    :}
-
-  | IF bool_expr THEN BEGIN stmt_list END error BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("ELSE invalido; recuperado en siguiente BEGIN", t);
-    :}
-
-  | IF error THEN BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Condicion invalida en IF; recuperado en THEN", t);
-    :}
-
-  | IF error error
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("IF invalido; recuperado saltando hasta siguiente sentencia", t);
-    :}
-;
-
-while_stmt ::=
-    WHILE bool_expr DO BEGIN stmt_list END
-
-  | WHILE error DO BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Condicion invalida tras WHILE; recuperado en DO", t);
-    :}
-
-  | WHILE bool_expr DO error END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta BEGIN tras DO; recuperado en END", t);
-    :}
-;
-
-for_stmt ::=
-    FOR IDENT ASSIGN expr TO expr DO BEGIN stmt_list END
-
-  | FOR IDENT ASSIGN error TO expr DO BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("exp1 invalida en FOR; recuperado en TO", t);
-    :}
-
-  | FOR IDENT ASSIGN expr TO error DO BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("exp2 invalida en FOR; recuperado en DO", t);
-    :}
-
-  | FOR IDENT ASSIGN expr TO expr DO error END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta BEGIN tras DO; recuperado en END", t);
-    :}
-;
-
-
-/* ===================== RETURN ===================== */
-ret_stmt ::= RETURN expr SEMI;
+       ;
