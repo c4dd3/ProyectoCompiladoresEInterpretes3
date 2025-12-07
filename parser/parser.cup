@@ -15,6 +15,21 @@ parser code {:
             this.name = name;
             this.line = line;
         }
+
+        
+    }
+
+     public static class ParamInfo {
+        public String name;
+        public String type;
+        public int line;
+
+        public ParamInfo(String name, String type, int line) {
+            this.name = name;
+            this.type = type;
+            this.line = line;
+        }
+    
     }
 
     // Lista para almacenar errores sintacticos
@@ -123,8 +138,6 @@ non terminal
     funciones_globales,
     funcion_global,
     procedure_global,
-    parametros,
-    mas_parametros,
     cuerpo_funcion,
     cuerpo_procedure,
     bloque_funcion,
@@ -169,6 +182,7 @@ non terminal
 // Tipados para semántica
 non terminal java.util.List<IdInfo> lista_identificadores, mas_identificadores;
 non terminal String tipo;
+non terminal java.util.List<ParamInfo> parametros, mas_parametros;
 
 /* ========== PRECEDENCIAS DE OPERADORES ========== */
 // Precedencia de operadores booleanos (menor a mayor)
@@ -286,28 +300,113 @@ funciones_globales ::= funcion_global funciones_globales
                      ;
 
 /* ========== FUNCTION ========== */
-funcion_global ::= FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS tipo cuerpo_funcion
-                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros error DOS_PUNTOS tipo cuerpo_funcion
-                   {: parser.report_error("Falta ')' en declaracion de parametros de funcion", null); :}
-                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error tipo cuerpo_funcion
-                   {: parser.report_error("Falta ':' antes del tipo de retorno de funcion", null); :}
-                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error cuerpo_funcion
-                   {: parser.report_error("Tipo de retorno invalido en funcion. Use: INT, REAL, STRING o CHAR", null); :}
-                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error cuerpo_funcion
-                   {: parser.report_error("Falta ':' y tipo de retorno en declaracion de funcion", null); :}
-                 | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS tipo error END
-                   {: parser.report_error("Falta BEGIN en cuerpo de funcion", null); :}
-                 | FUNCTION error cuerpo_funcion
-                   {: parser.report_error("Error en declaracion de funcion. Formato: 'FUNCTION nombre(parametros): TIPO BEGIN ... END'", null); :}
-                 ;
+funcion_global ::=
+    FUNCTION IDENTIFICADOR:id PARENTESIS_IZQ parametros:plist PARENTESIS_DER DOS_PUNTOS tipo:t
+    {:
+        // FUNCTION (top-6), IDENTIFICADOR (top-5), '(' (top-4),
+        // parametros (top-3), ')' (top-2), ':' (top-1), tipo (top-0)
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-5);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-parametros ::= tipo IDENTIFICADOR mas_parametros
-             | /* epsilon */
-             ;
+        // Convertir ParamInfo -> listas de nombres y tipos
+        java.util.List<String> paramNames = new java.util.ArrayList<>();
+        java.util.List<String> paramTypes = new java.util.ArrayList<>();
+        for (ParamInfo p : plist) {
+            paramNames.add(p.name);
+            paramTypes.add(p.type);
+        }
 
-mas_parametros ::= COMA tipo IDENTIFICADOR mas_parametros
-                 | /* epsilon */
-                 ;
+        boolean ok = SymbolTable.addFunction(id, line, paramNames, paramTypes, t);
+        if (!ok) {
+            SemanticAnalyzer.addError(
+                line,
+                "Funcion '" + id + "' ya esta definida en el ambito GLOBAL",
+                "DOBLE_DEFINICION_FUNCION"
+            );
+        }
+
+        // Abrir scope para la función
+        SymbolTable.enterScope(id);
+
+        // Insertar parámetros como variables del scope de la función
+        for (ParamInfo p : plist) {
+            boolean okVar = SymbolTable.addVariable(p.name, p.type, p.line);
+            if (!okVar) {
+                SemanticAnalyzer.addError(
+                    p.line,
+                    "Parametro '" + p.name + "' ya esta definido en el ambito de la funcion '" + id + "'",
+                    "DOBLE_DEFINICION"
+                );
+            }
+        }
+    :}
+    cuerpo_funcion
+    {:
+        // Salir del scope de la función
+        SymbolTable.exitScope();
+    :}
+  | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros error DOS_PUNTOS tipo cuerpo_funcion
+    {: parser.report_error("Falta ')' en declaracion de parametros de funcion", null); :}
+  | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error tipo cuerpo_funcion
+    {: parser.report_error("Falta ':' antes del tipo de retorno de funcion", null); :}
+  | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error cuerpo_funcion
+    {: parser.report_error("Tipo de retorno invalido en funcion. Use: INT, REAL, STRING o CHAR", null); :}
+  | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error cuerpo_funcion
+    {: parser.report_error("Falta ':' y tipo de retorno en declaracion de funcion", null); :}
+  | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS tipo error END
+    {: parser.report_error("Falta BEGIN en cuerpo de funcion", null); :}
+  | FUNCTION error cuerpo_funcion
+    {: parser.report_error("Error en declaracion de funcion. Formato: 'FUNCTION nombre(parametros): TIPO BEGIN ... END'", null); :}
+  ;
+
+parametros ::= tipo:t IDENTIFICADOR:id mas_parametros:resto
+    {:
+        java.util.List<ParamInfo> list = new java.util.ArrayList<>();
+
+        // Producción: tipo IDENTIFICADOR mas_parametros  (longitud 3)
+        // Stack: top-2 = tipo, top-1 = IDENTIFICADOR, top-0 = mas_parametros
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
+
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        list.add(new ParamInfo(id, t, line));
+
+        java.util.List<ParamInfo> tail = resto;
+        if (tail != null) list.addAll(tail);
+
+        RESULT = list;
+    :}
+  | /* epsilon */
+    {:
+        RESULT = new java.util.ArrayList<ParamInfo>();
+    :}
+  ;
+
+mas_parametros ::= COMA tipo:t IDENTIFICADOR:id mas_parametros:resto
+    {:
+        java.util.List<ParamInfo> list = new java.util.ArrayList<>();
+
+        // Producción: COMA tipo IDENTIFICADOR mas_parametros (longitud 4)
+        // Stack: top-3 = COMA, top-2 = tipo, top-1 = IDENTIFICADOR, top-0 = mas_parametros
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
+
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        list.add(new ParamInfo(id, t, line));
+
+        java.util.List<ParamInfo> tail = resto;
+        if (tail != null) list.addAll(tail);
+
+        RESULT = list;
+    :}
+  | /* epsilon */
+    {:
+        RESULT = new java.util.ArrayList<ParamInfo>();
+    :}
+  ;
 
 cuerpo_funcion ::= BEGIN bloque_funcion END 
                   | VAR lista_declaraciones_globales BEGIN bloque_funcion END
@@ -325,18 +424,55 @@ retorno ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
           ;
 
 /* ========== PROCEDURE ========== */
-procedure_global ::= PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error tipo cuerpo_procedure
-                     {: parser.report_error("Un procedimiento no debe tener tipo de retorno. Use FUNCTION si requiere devolver un valor", null); :}
-                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER DOS_PUNTOS error cuerpo_procedure
-                     {: parser.report_error("Un procedimiento no debe tener tipo de retorno. Use FUNCTION si requiere devolver un valor", null); :}
-                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER cuerpo_procedure
-                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros error cuerpo_procedure
-                     {: parser.report_error("Falta ')' en declaracion de parametros de procedimiento", null); :}
-                   | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error END
-                     {: parser.report_error("Falta BEGIN en cuerpo de procedimiento", null); :}
-                   | PROCEDURE error cuerpo_procedure
-                     {: parser.report_error("Error en declaracion de procedimiento. Formato: 'PROCEDURE nombre(parametros) BEGIN ... END'", null); :}
-                   ;
+procedure_global ::=
+    PROCEDURE IDENTIFICADOR:id PARENTESIS_IZQ parametros:plist PARENTESIS_DER DOS_PUNTOS error tipo cuerpo_procedure
+      {: parser.report_error("Un procedimiento no debe tener tipo de retorno. Use FUNCTION si requiere devolver un valor", null); :}
+  | PROCEDURE IDENTIFICADOR:id PARENTESIS_IZQ parametros:plist PARENTESIS_DER DOS_PUNTOS error cuerpo_procedure
+      {: parser.report_error("Un procedimiento no debe tener tipo de retorno. Use FUNCTION si requiere devolver un valor", null); :}
+  | PROCEDURE IDENTIFICADOR:id PARENTESIS_IZQ parametros:plist PARENTESIS_DER
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        java.util.List<String> paramNames = new java.util.ArrayList<>();
+        java.util.List<String> paramTypes = new java.util.ArrayList<>();
+        for (ParamInfo p : plist) {
+            paramNames.add(p.name);
+            paramTypes.add(p.type);
+        }
+
+        boolean ok = SymbolTable.addProcedure(id, line, paramNames, paramTypes);
+        if (!ok) {
+            SemanticAnalyzer.addError(
+                line,
+                "Procedimiento '" + id + "' ya esta definido en el ambito GLOBAL",
+                "DOBLE_DEFINICION_PROCEDURE"
+            );
+        }
+
+        SymbolTable.enterScope(id);
+
+        // Insertar parámetros como variables del scope del procedimiento
+        for (ParamInfo p : plist) {
+            boolean okVar = SymbolTable.addVariable(p.name, p.type, p.line);
+            if (!okVar) {
+                SemanticAnalyzer.addError(
+                    p.line,
+                    "Parametro '" + p.name + "' ya esta definido en el ambito del procedimiento '" + id + "'",
+                    "DOBLE_DEFINICION"
+                );
+            }
+        }
+    :}
+    cuerpo_procedure
+    {:
+        SymbolTable.exitScope();
+    :}
+  | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros error cuerpo_procedure
+  | PROCEDURE IDENTIFICADOR PARENTESIS_IZQ parametros PARENTESIS_DER error END
+  | PROCEDURE error cuerpo_procedure
+  ;
 
 cuerpo_procedure ::= BEGIN bloque_procedure END
                     | VAR lista_declaraciones_globales BEGIN bloque_procedure END
@@ -351,16 +487,61 @@ sentencias ::= sentencia
              | sentencias sentencia
              ;
 
-sentencia ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
-            | estructura_control
-            | llamada_funcion PUNTO_COMA
-            | read_stmt
-            | write_stmt
-            | IDENTIFICADOR INCREMENTO PUNTO_COMA
-            | IDENTIFICADOR DECREMENTO PUNTO_COMA
-            | error PUNTO_COMA
-              {: parser.report_error("Error en sentencia. Verifique asignaciones, llamadas a funciones o estructuras de control", null); :}
-            ;
+sentencia ::=
+    IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
+    {:
+        // Verificar que la variable del lado izquierdo exista
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookup(id);
+        if (sym == null) {
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + id + "' no esta definida en un ambito visible",
+                "VAR_NO_DEFINIDA"
+            );
+        }
+        // Más adelante aquí también podríamos verificar tipos de la expresion vs tipo de la variable
+    :}
+  | estructura_control
+  | llamada_funcion PUNTO_COMA
+  | read_stmt
+  | write_stmt
+  | IDENTIFICADOR:id INCREMENTO PUNTO_COMA
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookup(id);
+        if (sym == null) {
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + id + "' no esta definida para incremento",
+                "VAR_NO_DEFINIDA"
+            );
+        }
+    :}
+  | IDENTIFICADOR:id DECREMENTO PUNTO_COMA
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookup(id);
+        if (sym == null) {
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + id + "' no esta definida para decremento",
+                "VAR_NO_DEFINIDA"
+            );
+        }
+    :}
+  | error PUNTO_COMA
+    {: parser.report_error("Error en sentencia. Verifique asignaciones, llamadas a funciones o estructuras de control", null); :}
+  ;
 
 /* ========== Cuerpo del Main ========== */
 cuerpo_main ::= BEGIN sentencias_main END
@@ -379,18 +560,61 @@ sentencias_main ::= sentencia_main
                   | sentencias_main sentencia_main
                   ;
 
-sentencia_main ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
-                 | estructura_control
-                 | llamada_funcion PUNTO_COMA
-                 | read_stmt
-                 | write_stmt
-                 | IDENTIFICADOR INCREMENTO PUNTO_COMA
-                 | IDENTIFICADOR DECREMENTO PUNTO_COMA
-                 | funcion_global
-                 | procedure_global
-                 | error PUNTO_COMA
-                   {: parser.report_error("Error en sentencia del programa principal", null); :}
-                 ;
+sentencia_main ::=
+    IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookup(id);
+        if (sym == null) {
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + id + "' no esta definida en un ambito visible",
+                "VAR_NO_DEFINIDA"
+            );
+        }
+    :}
+  | estructura_control
+  | llamada_funcion PUNTO_COMA
+  | read_stmt
+  | write_stmt
+  | IDENTIFICADOR:id INCREMENTO PUNTO_COMA
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookup(id);
+        if (sym == null) {
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + id + "' no esta definida para incremento",
+                "VAR_NO_DEFINIDA"
+            );
+        }
+    :}
+  | IDENTIFICADOR:id DECREMENTO PUNTO_COMA
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookup(id);
+        if (sym == null) {
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + id + "' no esta definida para decremento",
+                "VAR_NO_DEFINIDA"
+            );
+        }
+    :}
+  | funcion_global
+  | procedure_global
+  | error PUNTO_COMA
+    {: parser.report_error("Error en sentencia del programa principal", null); :}
+  ;
 
 /* ========== EXPRESIONES ARITMETICAS ========== */
 expresion ::= expresion MAS termino
@@ -506,17 +730,31 @@ if_stmt ::= IF condicion THEN BEGIN sentencias_main END
 
 /* ========== READ Y WRITE ========== */
 read_stmt ::=
-              READ PARENTESIS_IZQ PARENTESIS_DER PUNTO_COMA
-            | READ PARENTESIS_IZQ IDENTIFICADOR PARENTESIS_DER PUNTO_COMA
-            | READ PARENTESIS_IZQ IDENTIFICADOR COMA error PARENTESIS_DER PUNTO_COMA
-                {: parser.report_error("Error: 'READ' solo acepta una variable. Formato correcto: READ(variable);", null); :}
-            | READ PARENTESIS_IZQ error PARENTESIS_DER PUNTO_COMA
-                {: parser.report_error("Argumento inválido en READ. Use un identificador de variable", null); :}
-            | READ error PUNTO_COMA
-                {: parser.report_error("Falta '(' después de READ. Formato: 'READ();' o 'READ(variable);'", null); :}
-            | READ PARENTESIS_IZQ IDENTIFICADOR error PUNTO_COMA
-                {: parser.report_error("Falta ')' después del identificador en READ", null); :}
-            ;
+      READ PARENTESIS_IZQ PARENTESIS_DER PUNTO_COMA
+    | READ PARENTESIS_IZQ IDENTIFICADOR:id PARENTESIS_DER PUNTO_COMA
+      {:
+          java_cup.runtime.Symbol idSym =
+              (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2);
+          int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+          SymbolTable.Symbol sym = SymbolTable.lookup(id);
+          if (sym == null) {
+              SemanticAnalyzer.addError(
+                  line,
+                  "Variable '" + id + "' usada en READ no esta definida",
+                  "VAR_NO_DEFINIDA"
+              );
+          }
+      :}
+    | READ PARENTESIS_IZQ IDENTIFICADOR COMA error PARENTESIS_DER PUNTO_COMA
+        {: parser.report_error("Error: 'READ' solo acepta una variable. Formato correcto: READ(variable);", null); :}
+    | READ PARENTESIS_IZQ error PARENTESIS_DER PUNTO_COMA
+        {: parser.report_error("Argumento inválido en READ. Use un identificador de variable", null); :}
+    | READ error PUNTO_COMA
+        {: parser.report_error("Falta '(' después de READ. Formato: 'READ();' o 'READ(variable);'", null); :}
+    | READ PARENTESIS_IZQ IDENTIFICADOR error PUNTO_COMA
+        {: parser.report_error("Falta ')' después del identificador en READ", null); :}
+    ;
 
 
 write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones PARENTESIS_DER PUNTO_COMA
@@ -527,10 +765,42 @@ write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones PARENTESIS_DER PUNTO_COMA
              ;
 
 /* ========== LLAMADAS A FUNCIONES ========== */
-llamada_funcion ::= IDENTIFICADOR PARENTESIS_IZQ lista_expresiones PARENTESIS_DER
-                  | IDENTIFICADOR PARENTESIS_IZQ PARENTESIS_DER
-                  ;
+llamada_funcion ::=
+    IDENTIFICADOR:id PARENTESIS_IZQ lista_expresiones PARENTESIS_DER
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
+        SymbolTable.Symbol sym = SymbolTable.lookupInScope(id, "GLOBAL");
+        if (sym == null || 
+            !(sym.category.equals("FUNCTION") || sym.category.equals("PROCEDURE"))) {
+            SemanticAnalyzer.addError(
+                line,
+                "Llamada a '" + id + "' que no esta definida como funcion o procedimiento",
+                "FUNCION_NO_DEFINIDA"
+            );
+        }
+        // Más adelante aquí vamos a verificar número y tipos de parámetros
+    :}
+  | IDENTIFICADOR:id PARENTESIS_IZQ PARENTESIS_DER
+    {:
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+        SymbolTable.Symbol sym = SymbolTable.lookupInScope(id, "GLOBAL");
+        if (sym == null || 
+            !(sym.category.equals("FUNCTION") || sym.category.equals("PROCEDURE"))) {
+            SemanticAnalyzer.addError(
+                line,
+                "Llamada a '" + id + "' que no esta definida como funcion o procedimiento",
+                "FUNCION_NO_DEFINIDA"
+            );
+        }
+        // Aquí también usaremos info de parámetros en Fase 2B
+    :}
+  ;
 lista_expresiones ::= expresion mas_expresiones
                     ;
 
