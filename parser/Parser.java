@@ -809,8 +809,6 @@ public class Parser extends java_cup.runtime.lr_parser {
         }
     }
 
-
-
     // Lista para almacenar errores sintacticos
     private ArrayList<String> erroresSintacticos = new ArrayList<>();
     private int errorCount = 0;
@@ -1057,15 +1055,18 @@ class CUP$Parser$actions {
 		
         java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
-        // 'id' es el lexema del identificador (String)
-        String name = id;
-        // Por ahora usamos una línea genérica; si luego quieres línea real,
-        // se puede ajustar el scanner para pasarla en el value.
-        int line = 1;
+        // Symbol completo del primer IDENTIFICADOR
+        // Producción: IDENTIFICADOR mas_identificadores  → largo = 2
+        // Stack: top-1 = IDENTIFICADOR, top-0 = mas_identificadores
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
+
+        String name = id; // el lexema (String, porque terminal String IDENTIFICADOR)
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
         list.add(new IdInfo(name, line));
 
-        java.util.List<IdInfo> tail = resto;
+        java.util.List<IdInfo> tail = resto; // ya está tipado como List<IdInfo>
         if (tail != null) list.addAll(tail);
 
         RESULT = list;
@@ -1087,8 +1088,16 @@ class CUP$Parser$actions {
 		
         java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
+        // Producción: COMA IDENTIFICADOR mas_identificadores  → largo = 3
+        // Stack:
+        //   top-2 = COMA
+        //   top-1 = IDENTIFICADOR
+        //   top-0 = mas_identificadores
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
+
         String name = id;
-        int line = 1;
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
         list.add(new IdInfo(name, line));
 
@@ -1732,11 +1741,16 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		
-               String name = id;
-               int line = 1; // de nuevo, línea genérica por ahora
+               // Producción: factor ::= IDENTIFICADOR  → largo = 1
+               // Stack: top-0 = IDENTIFICADOR
+               java_cup.runtime.Symbol idSym =
+                   (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-0);
 
-               SymbolTable.Symbol sym = SymbolTable.lookup(name);
-               if (sym == null) {
+               String name = id;
+               int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
+
+               SymbolTable.Symbol symb = SymbolTable.lookup(name);
+               if (symb == null) {
                    SemanticAnalyzer.addError(
                        line,
                        "Variable '" + name + "' no esta definida en un ambito visible",
