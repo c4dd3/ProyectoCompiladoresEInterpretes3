@@ -12,7 +12,12 @@ public class MainParser {
     private static final boolean SHOW_TOKENS = false; // si luego querés mostrar tokens, lo vemos aparte
 
     public static void run(String sourcePath) {
-        System.out.println("=== Analizando (P2): " + sourcePath + " ===");
+        System.out.println("=== Analizando (P3): " + sourcePath + " ===");
+
+    // Fase 1: reset de estructuras semánticas y generador
+        SymbolTable.reset();
+        SemanticAnalyzer.reset();
+        CodeGenerator.reset(); 
 
         Scanner sc = null;
         Parser p = null;
@@ -62,6 +67,15 @@ public class MainParser {
         } else {
             System.out.println("(ninguno)");
         }
+
+        // 5) Errores semánticos
+        System.out.println();
+        System.out.println("=== ERRORES SEMANTICOS ===");
+        SemanticAnalyzer.printErrors();
+
+        // 6) Contenido de la tabla de símbolos
+        System.out.println();
+        SymbolTable.print();
 
         System.out.println("=== Fin del analisis P2 ===");
     }

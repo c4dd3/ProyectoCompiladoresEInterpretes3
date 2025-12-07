@@ -2,8 +2,21 @@
 package parser;
 import java_cup.runtime.*;
 import java.util.ArrayList;
+import java.util.List;
+import parser.SymbolTable;
 
 parser code {:
+    // Para guardar info de cada identificador en una declaracion
+    public static class IdInfo {
+        public String name;
+        public int line;
+
+        public IdInfo(String name, int line) {
+            this.name = name;
+            this.line = line;
+        }
+    }
+
     // Lista para almacenar errores sintacticos
     private ArrayList<String> erroresSintacticos = new ArrayList<>();
     private int errorCount = 0;
@@ -90,10 +103,10 @@ terminal
     PARENTESIS_DER, CORCHETE_IZQ, CORCHETE_DER, PUNTO, PUNTERO,
     
     /* Literales COMPLETOS */
-    LIT_ENTERO, LIT_REAL, LIT_OCTAL, LIT_HEX, LIT_STRING, LIT_CHAR,
+    LIT_ENTERO, LIT_REAL, LIT_OCTAL, LIT_HEX, LIT_STRING, LIT_CHAR;
     
     /* Identificadores */
-    IDENTIFICADOR;
+terminal String IDENTIFICADOR;
 
 /* ========== REGLAS DE PRODUCCION - NON TERMINALS ========== */
 non terminal
@@ -105,8 +118,6 @@ non terminal
     variables_globales,
     lista_declaraciones_globales,
     declaracion_variable_global,
-    lista_identificadores,
-    mas_identificadores,
     
     // Declaracion de Funciones y Procedures
     funciones_globales,
@@ -152,11 +163,12 @@ non terminal
     lista_expresiones,
     mas_expresiones,
     
-    // Tipos de datos
-    tipo,
-    
     // Main
     cuerpo_main;
+  
+// Tipados para semántica
+non terminal java.util.List<IdInfo> lista_identificadores, mas_identificadores;
+non terminal String tipo;
 
 /* ========== PRECEDENCIAS DE OPERADORES ========== */
 // Precedencia de operadores booleanos (menor a mayor)
@@ -196,19 +208,65 @@ lista_declaraciones_globales ::= declaracion_variable_global
                                 | lista_declaraciones_globales declaracion_variable_global
                                 ;
 
-declaracion_variable_global ::= lista_identificadores DOS_PUNTOS tipo PUNTO_COMA
-                               | lista_identificadores DOS_PUNTOS error PUNTO_COMA
-                                 {: parser.report_error("Tipo de dato invalido o faltante en declaracion de variable. Use: INT, REAL, STRING o CHAR", null); :}
-                               | lista_identificadores error tipo PUNTO_COMA
-                                 {: parser.report_error("Falta ':' en declaracion de variable. Formato correcto: 'variable : TIPO;'", null); :}
-                               ;
+declaracion_variable_global ::= lista_identificadores:ids DOS_PUNTOS tipo:t PUNTO_COMA
+    {:
+        // Para cada identificador declarado, lo agregamos a la tabla de símbolos
+        for (IdInfo id : ids) {
+            boolean ok = SymbolTable.addVariable(id.name, t, id.line);
+            if (!ok) {
+                // Variable doblemente definida en el mismo ámbito
+                SemanticAnalyzer.addError(
+                    id.line,
+                    "Variable '" + id.name + "' ya esta definida en el ambito " + SymbolTable.getCurrentScope(),
+                    "DOBLE_DEFINICION"
+                );
+            }
+        }
+    :}
+    | lista_identificadores DOS_PUNTOS error PUNTO_COMA
+      {: parser.report_error("Tipo de dato invalido o faltante en declaracion de variable. Use: INT, REAL, STRING o CHAR", null); :}
+    | lista_identificadores error tipo PUNTO_COMA
+      {: parser.report_error("Falta ':' en declaracion de variable. Formato correcto: 'variable : TIPO;'", null); :}
+    ;
 
-lista_identificadores ::= IDENTIFICADOR mas_identificadores
-                        ;
+lista_identificadores ::= IDENTIFICADOR:id mas_identificadores:resto
+    {:
+        java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
-mas_identificadores ::= COMA IDENTIFICADOR mas_identificadores
-                      | /* vacío */
-                      ;
+        // 'id' es el lexema del identificador (String)
+        String name = id;
+        // Por ahora usamos una línea genérica; si luego quieres línea real,
+        // se puede ajustar el scanner para pasarla en el value.
+        int line = 1;
+
+        list.add(new IdInfo(name, line));
+
+        java.util.List<IdInfo> tail = resto;
+        if (tail != null) list.addAll(tail);
+
+        RESULT = list;
+    :}
+    ;
+
+mas_identificadores ::= COMA IDENTIFICADOR:id mas_identificadores:resto
+    {:
+        java.util.List<IdInfo> list = new java.util.ArrayList<>();
+
+        String name = id;
+        int line = 1;
+
+        list.add(new IdInfo(name, line));
+
+        java.util.List<IdInfo> tail = resto;
+        if (tail != null) list.addAll(tail);
+
+        RESULT = list;
+    :}
+    | /* vacío */
+    {:
+        RESULT = new java.util.ArrayList<IdInfo>();
+    :}
+    ;
 
 /* ========== Declaracion de Funciones y Procedures ========== */
 funciones_globales ::= funcion_global funciones_globales
@@ -337,7 +395,20 @@ termino ::= termino POR factor
           ;
 
 factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
-         | IDENTIFICADOR
+         | IDENTIFICADOR:id
+           {:
+               String name = id;
+               int line = 1; // de nuevo, línea genérica por ahora
+
+               SymbolTable.Symbol sym = SymbolTable.lookup(name);
+               if (sym == null) {
+                   SemanticAnalyzer.addError(
+                       line,
+                       "Variable '" + name + "' no esta definida en un ambito visible",
+                       "VAR_NO_DEFINIDA"
+                   );
+               }
+           :}
          | llamada_funcion
          | LIT_ENTERO
          | LIT_REAL
@@ -453,7 +524,11 @@ mas_expresiones ::= COMA expresion mas_expresiones
 
 /* ========== TIPOS DE DATOS ========== */
 tipo ::= INT
+       {: RESULT = "INT"; :}
        | CHAR
+       {: RESULT = "CHAR"; :}
        | REAL
+       {: RESULT = "REAL"; :}
        | STRING
+       {: RESULT = "STRING"; :}
        ;
