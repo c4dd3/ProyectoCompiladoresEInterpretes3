@@ -252,7 +252,7 @@ bloque_funcion ::= sentencias retorno
                    {: parser.report_error("Falta RETURN en cuerpo de funcion", null); :}
                  ;
 
-retorno ::= IDENTIFICADOR ASIGNACION expresion //PUNTO_COMA
+retorno ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA
           ;
 
 /* ========== PROCEDURE ========== */
@@ -273,11 +273,7 @@ cuerpo_procedure ::= BEGIN bloque_procedure END
                     | VAR lista_declaraciones_globales BEGIN bloque_procedure END
                    ;
 
-bloque_procedure ::= sentencias retorno error
-                     {: parser.report_error("Un procedimiento no debe contener sentencia RETURN. Use FUNCTION si desea devolver un valor", null); :}
-                   | retorno error
-                     {: parser.report_error("Un procedimiento no debe contener sentencia RETURN. Use FUNCTION si desea devolver un valor", null); :}
-                   | sentencias
+bloque_procedure ::= sentencias
                    | /* vacío */
                    ;
 
