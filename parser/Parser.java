@@ -1446,7 +1446,56 @@ class CUP$Parser$actions {
           case 37: // retorno ::= IDENTIFICADOR ASIGNACION expresion PUNTO_COMA 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
+		
+        // Línea del identificador del "retorno"
+        java_cup.runtime.Symbol idSym =
+            (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
+        int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
+        // Resultado de la expresión de retorno
+        SemanticStack.StackEntry expr = null;
+        if (SemanticStack.size() > 0) {
+            expr = SemanticStack.pop();
+        }
+
+        // Nombre del scope actual (debería ser el nombre de la función)
+        String currentScope = SymbolTable.getCurrentScope();
+
+        // 1) Verificar que se está retornando a la función correcta
+        if (!id.equals(currentScope)) {
+            SemanticAnalyzer.addError(
+                line,
+                "El retorno debe asignarse al identificador de la funcion '" +
+                currentScope + "', no a '" + id + "'",
+                "RETORNO_INVALIDO"
+            );
+        }
+
+        // 2) Verificar tipo de retorno vs tipo de la función
+        SymbolTable.Symbol funSym = SymbolTable.lookupInScope(currentScope, "GLOBAL");
+        if (funSym != null && expr != null && !expr.type.equals("ERROR")) {
+
+            boolean compatible =
+                   funSym.type.equals(expr.type)
+                || (funSym.type.equals("REAL") && expr.type.equals("INT"));
+
+            if (!compatible) {
+                SemanticAnalyzer.addError(
+                    line,
+                    "Tipo de retorno incompatible en funcion '" + currentScope +
+                    "': se esperaba " + funSym.type +
+                    " pero se obtuvo " + expr.type,
+                    "TIPO_RETORNO_INCOMPATIBLE"
+                );
+            } else {
+                // Código intermedio para el retorno: nombreFuncion = valor
+                CodeGenerator.emitCode(currentScope + " = " + expr.value);
+            }
+        }
+    
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("retorno",12, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -1638,11 +1687,18 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
 		
-        // Verificar que la variable del lado izquierdo exista
+        // Línea del identificador
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
+        // Resultado de la expresión en la pila semántica
+        SemanticStack.StackEntry expr = null;
+        if (SemanticStack.size() > 0) {
+            expr = SemanticStack.pop();
+        }
+
+        // Buscar la variable en la tabla de símbolos
         SymbolTable.Symbol sym = SymbolTable.lookup(id);
         if (sym == null) {
             SemanticAnalyzer.addError(
@@ -1650,8 +1706,24 @@ class CUP$Parser$actions {
                 "Variable '" + id + "' no esta definida en un ambito visible",
                 "VAR_NO_DEFINIDA"
             );
+        } else if (expr != null && !expr.type.equals("ERROR")) {
+            // Compatibilidad simple de tipos
+            boolean compatible =
+                   sym.type.equals(expr.type)
+                || (sym.type.equals("REAL") && expr.type.equals("INT")); // INT -> REAL permitido
+
+            if (!compatible) {
+                SemanticAnalyzer.addError(
+                    line,
+                    "Tipos incompatibles en asignacion: no se puede asignar " +
+                    expr.type + " a variable de tipo " + sym.type,
+                    "TIPOS_INCOMPATIBLES"
+                );
+            } else {
+                // Código intermedio: id = expr.value
+                CodeGenerator.emitCode(id + " = " + expr.value);
+            }
         }
-        // Más adelante aquí también podríamos verificar tipos de la expresion vs tipo de la variable
     
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("sentencia",14, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -1836,6 +1908,13 @@ class CUP$Parser$actions {
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
+        // Resultado de la expresión en la pila semántica
+        SemanticStack.StackEntry expr = null;
+        if (SemanticStack.size() > 0) {
+            expr = SemanticStack.pop();
+        }
+
+        // Buscar la variable en la tabla de símbolos
         SymbolTable.Symbol sym = SymbolTable.lookup(id);
         if (sym == null) {
             SemanticAnalyzer.addError(
@@ -1843,6 +1922,21 @@ class CUP$Parser$actions {
                 "Variable '" + id + "' no esta definida en un ambito visible",
                 "VAR_NO_DEFINIDA"
             );
+        } else if (expr != null && !expr.type.equals("ERROR")) {
+            boolean compatible =
+                   sym.type.equals(expr.type)
+                || (sym.type.equals("REAL") && expr.type.equals("INT"));
+
+            if (!compatible) {
+                SemanticAnalyzer.addError(
+                    line,
+                    "Tipos incompatibles en asignacion: no se puede asignar " +
+                    expr.type + " a variable de tipo " + sym.type,
+                    "TIPOS_INCOMPATIBLES"
+                );
+            } else {
+                CodeGenerator.emitCode(id + " = " + expr.value);
+            }
         }
     
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("sentencia_main",16, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
@@ -2378,7 +2472,25 @@ class CUP$Parser$actions {
           case 116: // while_stmt ::= WHILE condicion DO BEGIN sentencias_main END 
             {
               Object RESULT =null;
+		
+        // Verificar que la condición sea de tipo BOOL
+        SemanticStack.StackEntry cond = null;
+        if (SemanticStack.size() > 0) {
+            cond = SemanticStack.pop();
+        }
 
+        if (cond != null && !cond.type.equals("BOOL") && !cond.type.equals("ERROR")) {
+            java_cup.runtime.Symbol whileSym =
+                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-5);
+            int line = (whileSym.left >= 0 ? whileSym.left + 1 : 1);
+
+            SemanticAnalyzer.addError(
+                line,
+                "La condicion del WHILE debe ser de tipo BOOL",
+                "CONDICION_NO_BOOLEANA"
+            );
+        }
+    
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("while_stmt",25, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-5)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2468,7 +2580,24 @@ class CUP$Parser$actions {
           case 126: // if_stmt ::= IF condicion THEN BEGIN sentencias_main END 
             {
               Object RESULT =null;
+		
+        SemanticStack.StackEntry cond = null;
+        if (SemanticStack.size() > 0) {
+            cond = SemanticStack.pop();
+        }
 
+        if (cond != null && !cond.type.equals("BOOL") && !cond.type.equals("ERROR")) {
+            java_cup.runtime.Symbol ifSym =
+                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-5);
+            int line = (ifSym.left >= 0 ? ifSym.left + 1 : 1);
+
+            SemanticAnalyzer.addError(
+                line,
+                "La condicion del IF debe ser de tipo BOOL",
+                "CONDICION_NO_BOOLEANA"
+            );
+        }
+    
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("if_stmt",27, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-5)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2477,7 +2606,24 @@ class CUP$Parser$actions {
           case 127: // if_stmt ::= IF condicion THEN BEGIN sentencias_main END ELSE BEGIN sentencias_main END 
             {
               Object RESULT =null;
+		
+        SemanticStack.StackEntry cond = null;
+        if (SemanticStack.size() > 0) {
+            cond = SemanticStack.pop();
+        }
 
+        if (cond != null && !cond.type.equals("BOOL") && !cond.type.equals("ERROR")) {
+            java_cup.runtime.Symbol ifSym =
+                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-9);
+            int line = (ifSym.left >= 0 ? ifSym.left + 1 : 1);
+
+            SemanticAnalyzer.addError(
+                line,
+                "La condicion del IF debe ser de tipo BOOL",
+                "CONDICION_NO_BOOLEANA"
+            );
+        }
+    
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("if_stmt",27, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-9)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
