@@ -18,6 +18,7 @@ public class MainParser {
         SymbolTable.reset();
         SemanticAnalyzer.reset();
         CodeGenerator.reset(); 
+        SemanticStack.reset(); 
 
         Scanner sc = null;
         Parser p = null;
@@ -58,7 +59,7 @@ public class MainParser {
         }
         System.out.println();
 
-        // 4) Errores sintácticos (los que guarda tu parser.cup)
+        // 4) Errores sintácticos
         System.out.println("=== ERRORES SINTACTICOS ===");
         if (p != null && !p.getErroresSintacticos().isEmpty()) {
             for (String err : p.getErroresSintacticos()) {
@@ -77,7 +78,7 @@ public class MainParser {
         System.out.println();
         SymbolTable.print();
 
-        System.out.println("=== Fin del analisis P2 ===");
+        System.out.println("=== Fin del analisis P3 ===");
     }
 
     public static void main(String[] args) {

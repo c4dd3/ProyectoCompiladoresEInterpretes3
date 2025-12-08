@@ -157,23 +157,23 @@ public class Parser extends java_cup.runtime.lr_parser {
     "\107\uffa8\110\uffa8\111\uffa8\112\uffa8\113\uffa8\115\uffa8\116" +
     "\uffa8\121\uffa8\001\002\000\032\077\107\100\102\103\117" +
     "\104\120\120\104\126\112\127\103\130\110\131\105\132" +
-    "\115\133\111\134\121\001\002\000\054\003\uffa6\005\uffa6" +
-    "\015\uffa6\016\uffa6\037\uffa6\044\uffa6\057\uffa6\060\uffa6\077" +
-    "\uffa6\100\uffa6\101\uffa6\102\uffa6\106\uffa6\107\uffa6\110\uffa6" +
-    "\111\uffa6\112\uffa6\113\uffa6\115\uffa6\116\uffa6\121\uffa6\001" +
+    "\115\133\111\134\121\001\002\000\054\003\uffa4\005\uffa4" +
+    "\015\uffa4\016\uffa4\037\uffa4\044\uffa4\057\uffa4\060\uffa4\077" +
+    "\uffa4\100\uffa4\101\uffa4\102\uffa4\106\uffa4\107\uffa4\110\uffa4" +
+    "\111\uffa4\112\uffa4\113\uffa4\115\uffa4\116\uffa4\121\uffa4\001" +
     "\002\000\054\003\uffb2\005\uffb2\015\140\016\uffb2\037\136" +
     "\044\uffb2\057\uffb2\060\uffb2\077\uffb2\100\uffb2\101\141\102" +
     "\137\106\uffb2\107\uffb2\110\uffb2\111\uffb2\112\uffb2\113\uffb2" +
     "\115\uffb2\116\uffb2\121\uffb2\001\002\000\032\077\107\100" +
     "\102\103\117\104\120\120\104\126\112\127\103\130\110" +
     "\131\105\132\115\133\111\134\121\001\002\000\054\003" +
-    "\uffa7\005\uffa7\015\uffa7\016\uffa7\037\uffa7\044\uffa7\057\uffa7" +
-    "\060\uffa7\077\uffa7\100\uffa7\101\uffa7\102\uffa7\106\uffa7\107" +
-    "\uffa7\110\uffa7\111\uffa7\112\uffa7\113\uffa7\115\uffa7\116\uffa7" +
-    "\121\uffa7\001\002\000\054\003\uffa4\005\uffa4\015\uffa4\016" +
-    "\uffa4\037\uffa4\044\uffa4\057\uffa4\060\uffa4\077\uffa4\100\uffa4" +
-    "\101\uffa4\102\uffa4\106\uffa4\107\uffa4\110\uffa4\111\uffa4\112" +
-    "\uffa4\113\uffa4\115\uffa4\116\uffa4\121\uffa4\001\002\000\054" +
+    "\uffa5\005\uffa5\015\uffa5\016\uffa5\037\uffa5\044\uffa5\057\uffa5" +
+    "\060\uffa5\077\uffa5\100\uffa5\101\uffa5\102\uffa5\106\uffa5\107" +
+    "\uffa5\110\uffa5\111\uffa5\112\uffa5\113\uffa5\115\uffa5\116\uffa5" +
+    "\121\uffa5\001\002\000\054\003\uffa6\005\uffa6\015\uffa6\016" +
+    "\uffa6\037\uffa6\044\uffa6\057\uffa6\060\uffa6\077\uffa6\100\uffa6" +
+    "\101\uffa6\102\uffa6\106\uffa6\107\uffa6\110\uffa6\111\uffa6\112" +
+    "\uffa6\113\uffa6\115\uffa6\116\uffa6\121\uffa6\001\002\000\054" +
     "\003\uffa9\005\uffa9\015\uffa9\016\uffa9\037\uffa9\044\uffa9\057" +
     "\uffa9\060\uffa9\077\uffa9\100\uffa9\101\uffa9\102\uffa9\106\uffa9" +
     "\107\uffa9\110\uffa9\111\uffa9\112\uffa9\113\uffa9\115\uffa9\116" +
@@ -181,11 +181,11 @@ public class Parser extends java_cup.runtime.lr_parser {
     "\001\002\000\054\003\uffad\005\uffad\015\uffad\016\uffad\037" +
     "\uffad\044\uffad\057\uffad\060\uffad\077\uffad\100\uffad\101\uffad" +
     "\102\uffad\106\uffad\107\uffad\110\uffad\111\uffad\112\uffad\113" +
-    "\uffad\115\uffad\116\uffad\121\uffad\001\002\000\054\003\uffa5" +
-    "\005\uffa5\015\uffa5\016\uffa5\037\uffa5\044\uffa5\057\uffa5\060" +
-    "\uffa5\077\uffa5\100\uffa5\101\uffa5\102\uffa5\106\uffa5\107\uffa5" +
-    "\110\uffa5\111\uffa5\112\uffa5\113\uffa5\115\uffa5\116\uffa5\121" +
-    "\uffa5\001\002\000\054\003\uffaa\005\uffaa\015\uffaa\016\uffaa" +
+    "\uffad\115\uffad\116\uffad\121\uffad\001\002\000\054\003\uffa7" +
+    "\005\uffa7\015\uffa7\016\uffa7\037\uffa7\044\uffa7\057\uffa7\060" +
+    "\uffa7\077\uffa7\100\uffa7\101\uffa7\102\uffa7\106\uffa7\107\uffa7" +
+    "\110\uffa7\111\uffa7\112\uffa7\113\uffa7\115\uffa7\116\uffa7\121" +
+    "\uffa7\001\002\000\054\003\uffaa\005\uffaa\015\uffaa\016\uffaa" +
     "\037\uffaa\044\uffaa\057\uffaa\060\uffaa\077\uffaa\100\uffaa\101" +
     "\uffaa\102\uffaa\106\uffaa\107\uffaa\110\uffaa\111\uffaa\112\uffaa" +
     "\113\uffaa\115\uffaa\116\uffaa\121\uffaa\001\002\000\004\134" +
@@ -1966,7 +1966,7 @@ class CUP$Parser$actions {
           case 77: // expresion ::= expresion MAS termino 
             {
               Object RESULT =null;
-
+		 SemanticStack.processBinaryOp("+"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("expresion",17, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -1975,7 +1975,7 @@ class CUP$Parser$actions {
           case 78: // expresion ::= expresion MENOS termino 
             {
               Object RESULT =null;
-
+		 SemanticStack.processBinaryOp("-"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("expresion",17, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -1993,7 +1993,7 @@ class CUP$Parser$actions {
           case 80: // termino ::= termino POR factor 
             {
               Object RESULT =null;
-
+		 SemanticStack.processBinaryOp("*"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("termino",18, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2002,7 +2002,7 @@ class CUP$Parser$actions {
           case 81: // termino ::= termino DIVISION factor 
             {
               Object RESULT =null;
-
+		 SemanticStack.processBinaryOp("/"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("termino",18, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2011,7 +2011,7 @@ class CUP$Parser$actions {
           case 82: // termino ::= termino DIV factor 
             {
               Object RESULT =null;
-
+		 SemanticStack.processBinaryOp("DIV"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("termino",18, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2020,7 +2020,7 @@ class CUP$Parser$actions {
           case 83: // termino ::= termino MOD factor 
             {
               Object RESULT =null;
-
+		 SemanticStack.processBinaryOp("MOD"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("termino",18, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2051,22 +2051,13 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		
-               // Producción: factor ::= IDENTIFICADOR  → largo = 1
-               // Stack: top-0 = IDENTIFICADOR
+               // línea del identificador
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-0);
-
-               String name = id;
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-               SymbolTable.Symbol symb = SymbolTable.lookup(name);
-               if (symb == null) {
-                   SemanticAnalyzer.addError(
-                       line,
-                       "Variable '" + name + "' no esta definida en un ambito visible",
-                       "VAR_NO_DEFINIDA"
-                   );
-               }
+               // usar SemanticStack para verificar y pushear
+               SemanticStack.loadVariable(id, line);
            
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2085,7 +2076,13 @@ class CUP$Parser$actions {
           case 88: // factor ::= LIT_ENTERO 
             {
               Object RESULT =null;
-
+		int entleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int entright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		Object ent = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		
+               // Literal entero como constante INT
+               SemanticStack.loadConstant("INT", ent.toString());
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2094,43 +2091,70 @@ class CUP$Parser$actions {
           case 89: // factor ::= LIT_REAL 
             {
               Object RESULT =null;
-
+		int realleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int realright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		Object real = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		
+               // Literal real como constante REAL
+               SemanticStack.loadConstant("REAL", real.toString());
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
 
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 90: // factor ::= LIT_OCTAL 
+          case 90: // factor ::= LIT_STRING 
             {
               Object RESULT =null;
-
+		int stleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int stright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		Object st = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		
+               // Literal string (no hacemos folding, pero queda marcado constante)
+               SemanticStack.loadConstant("STRING", st.toString());
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
 
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 91: // factor ::= LIT_HEX 
+          case 91: // factor ::= LIT_CHAR 
             {
               Object RESULT =null;
-
+		int chleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int chright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		Object ch = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		
+               SemanticStack.loadConstant("CHAR", ch.toString());
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
 
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 92: // factor ::= LIT_STRING 
+          case 92: // factor ::= LIT_OCTAL 
             {
               Object RESULT =null;
-
+		int octleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int octright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		Object oct = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		
+               SemanticStack.loadConstant("INT", oct.toString());
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
 
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 93: // factor ::= LIT_CHAR 
+          case 93: // factor ::= LIT_HEX 
             {
               Object RESULT =null;
-
+		int hexleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int hexright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		Object hex = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
+		
+               SemanticStack.loadConstant("INT", hex.toString());
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2139,7 +2163,10 @@ class CUP$Parser$actions {
           case 94: // factor ::= MENOS factor 
             {
               Object RESULT =null;
-
+		
+               // operador unario - (negación)
+               SemanticStack.processUnaryOp("-");
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2148,7 +2175,9 @@ class CUP$Parser$actions {
           case 95: // factor ::= MAS factor 
             {
               Object RESULT =null;
-
+		
+               // + unario → lo ignoramos (no cambia el valor)
+           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2157,6 +2186,9 @@ class CUP$Parser$actions {
           case 96: // factor ::= IDENTIFICADOR INCREMENTO 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2166,6 +2198,9 @@ class CUP$Parser$actions {
           case 97: // factor ::= IDENTIFICADOR DECREMENTO 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2175,6 +2210,9 @@ class CUP$Parser$actions {
           case 98: // factor ::= INCREMENTO IDENTIFICADOR 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2184,6 +2222,9 @@ class CUP$Parser$actions {
           case 99: // factor ::= DECREMENTO IDENTIFICADOR 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
+		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2247,7 +2288,7 @@ class CUP$Parser$actions {
           case 106: // condicion_relacional ::= expresion IGUAL expresion 
             {
               Object RESULT =null;
-
+		 SemanticStack.processRelationalOp("="); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("condicion_relacional",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2256,7 +2297,7 @@ class CUP$Parser$actions {
           case 107: // condicion_relacional ::= expresion DIFERENTE expresion 
             {
               Object RESULT =null;
-
+		 SemanticStack.processRelationalOp("<>"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("condicion_relacional",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2265,7 +2306,7 @@ class CUP$Parser$actions {
           case 108: // condicion_relacional ::= expresion MENOR expresion 
             {
               Object RESULT =null;
-
+		 SemanticStack.processRelationalOp("<"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("condicion_relacional",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2274,7 +2315,7 @@ class CUP$Parser$actions {
           case 109: // condicion_relacional ::= expresion MAYOR expresion 
             {
               Object RESULT =null;
-
+		 SemanticStack.processRelationalOp(">"); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("condicion_relacional",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2283,7 +2324,7 @@ class CUP$Parser$actions {
           case 110: // condicion_relacional ::= expresion MENOR_IGUAL expresion 
             {
               Object RESULT =null;
-
+		 SemanticStack.processRelationalOp("<="); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("condicion_relacional",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2292,7 +2333,7 @@ class CUP$Parser$actions {
           case 111: // condicion_relacional ::= expresion MAYOR_IGUAL expresion 
             {
               Object RESULT =null;
-
+		 SemanticStack.processRelationalOp(">="); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("condicion_relacional",23, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;

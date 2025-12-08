@@ -618,50 +618,77 @@ sentencia_main ::=
 
 /* ========== EXPRESIONES ARITMETICAS ========== */
 expresion ::= expresion MAS termino
+              {: SemanticStack.processBinaryOp("+"); :}
             | expresion MENOS termino
+              {: SemanticStack.processBinaryOp("-"); :}
             | termino
             ;
 
-termino ::= termino POR factor
-          | termino DIVISION factor
-          | termino DIV factor
-          | termino MOD factor
-          | factor
-          ;
+termino   ::= termino POR factor
+              {: SemanticStack.processBinaryOp("*"); :}
+            | termino DIVISION factor
+              {: SemanticStack.processBinaryOp("/"); :}
+            | termino DIV factor
+              {: SemanticStack.processBinaryOp("DIV"); :}
+            | termino MOD factor
+              {: SemanticStack.processBinaryOp("MOD"); :}
+            | factor
+            ;
 
+/* Aquí viene el factor actualizado */
 factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
          | IDENTIFICADOR:id
            {:
-               // Producción: factor ::= IDENTIFICADOR  → largo = 1
-               // Stack: top-0 = IDENTIFICADOR
+               // línea del identificador
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-0);
-
-               String name = id;
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-               SymbolTable.Symbol symb = SymbolTable.lookup(name);
-               if (symb == null) {
-                   SemanticAnalyzer.addError(
-                       line,
-                       "Variable '" + name + "' no esta definida en un ambito visible",
-                       "VAR_NO_DEFINIDA"
-                   );
-               }
+               // usar SemanticStack para verificar y pushear
+               SemanticStack.loadVariable(id, line);
            :}
          | llamada_funcion
-         | LIT_ENTERO
-         | LIT_REAL
-         | LIT_OCTAL
-         | LIT_HEX
-         | LIT_STRING
-         | LIT_CHAR
+         | LIT_ENTERO:ent
+           {:
+               // Literal entero como constante INT
+               SemanticStack.loadConstant("INT", ent.toString());
+           :}
+         | LIT_REAL:real
+           {:
+               // Literal real como constante REAL
+               SemanticStack.loadConstant("REAL", real.toString());
+           :}
+         | LIT_STRING:st
+           {:
+               // Literal string (no hacemos folding, pero queda marcado constante)
+               SemanticStack.loadConstant("STRING", st.toString());
+           :}
+         | LIT_CHAR:ch
+           {:
+               SemanticStack.loadConstant("CHAR", ch.toString());
+           :}
+         /* si querés, puedes tratar OCTAL/HEX como INT también */
+         | LIT_OCTAL:oct
+           {:
+               SemanticStack.loadConstant("INT", oct.toString());
+           :}
+         | LIT_HEX:hex
+           {:
+               SemanticStack.loadConstant("INT", hex.toString());
+           :}
          | MENOS factor
+           {:
+               // operador unario - (negación)
+               SemanticStack.processUnaryOp("-");
+           :}
          | MAS factor
-         | IDENTIFICADOR INCREMENTO
-         | IDENTIFICADOR DECREMENTO
-         | INCREMENTO IDENTIFICADOR
-         | DECREMENTO IDENTIFICADOR
+           {:
+               // + unario → lo ignoramos (no cambia el valor)
+           :}
+         | IDENTIFICADOR:id INCREMENTO
+         | IDENTIFICADOR:id DECREMENTO
+         | INCREMENTO IDENTIFICADOR:id
+         | DECREMENTO IDENTIFICADOR:id
          ;
 
 /* ========== EXPRESIONES BOOLEANAS (CONDICIONES) ========== */
@@ -678,14 +705,20 @@ condicion_not ::= NOT condicion_not
                 ;
 
 condicion_relacional ::= expresion IGUAL expresion
+                         {: SemanticStack.processRelationalOp("="); :}
                        | expresion DIFERENTE expresion
+                         {: SemanticStack.processRelationalOp("<>"); :}
                        | expresion MENOR expresion
+                         {: SemanticStack.processRelationalOp("<"); :}
                        | expresion MAYOR expresion
+                         {: SemanticStack.processRelationalOp(">"); :}
                        | expresion MENOR_IGUAL expresion
+                         {: SemanticStack.processRelationalOp("<="); :}
                        | expresion MAYOR_IGUAL expresion
+                         {: SemanticStack.processRelationalOp(">="); :}
                        | PARENTESIS_IZQ condicion PARENTESIS_DER
                        ;
-
+                       
 /* ========== ESTRUCTURAS DE CONTROL ========== */
 estructura_control ::= while_stmt
                      | for_stmt

@@ -215,12 +215,19 @@ public class SemanticStack {
     public static void loadVariable(String name, int line) {
         SymbolTable.Symbol sym = SymbolTable.lookup(name);
         if (sym == null) {
-            SemanticAnalyzer.addError("Línea " + line + ": Variable '" + name + "' no definida");
-            push(new StackEntry("ERROR", name));  // Continuar con error
+            // mismo tipo de error que estás usando en el parser.cup
+            SemanticAnalyzer.addError(
+                line,
+                "Variable '" + name + "' no esta definida en un ambito visible",
+                "VAR_NO_DEFINIDA"
+            );
+            // seguimos, pero marcamos el tipo como ERROR
+            push(new StackEntry("ERROR", name));
         } else {
             push(new StackEntry(sym.type, name));
         }
     }
+
     
     /**
      * Carga una constante literal a la pila
