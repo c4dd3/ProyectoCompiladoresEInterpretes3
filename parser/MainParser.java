@@ -14,11 +14,11 @@ public class MainParser {
     public static void run(String sourcePath) {
         System.out.println("=== Analizando (P3): " + sourcePath + " ===");
 
-        // Fase 1: reset de estructuras semánticas y generador
+    // Fase 1: reset de estructuras semánticas y generador
         SymbolTable.reset();
         SemanticAnalyzer.reset();
-        CodeGenerator.reset();
-        SemanticStack.reset();
+        CodeGenerator.reset(); 
+        SemanticStack.reset(); 
 
         Scanner sc = null;
         Parser p = null;
@@ -78,46 +78,6 @@ public class MainParser {
         System.out.println();
         SymbolTable.print();
 
-        // 7) Decidir si se genera código
-        boolean hayErroresLexicos   = (sc != null && !sc.getErrores().isEmpty());
-        boolean hayErroresSintacticos = (p != null && !p.getErroresSintacticos().isEmpty());
-        boolean hayErroresSemanticos = SemanticAnalyzer.hasErrors();
-
-        System.out.println();
-        System.out.println("=== RESUMEN ===");
-        System.out.println("Errores léxicos   : " + (hayErroresLexicos ? sc.getErrores().size() : 0));
-        System.out.println("Errores sintácticos: " + (hayErroresSintacticos ? p.getErroresSintacticos().size() : 0));
-        System.out.println("Errores semánticos : " + (hayErroresSemanticos ? SemanticAnalyzer.getErrorCount() : 0));
-
-        if (!hayErroresLexicos && !hayErroresSintacticos && !hayErroresSemanticos) {
-            System.out.println();
-            System.out.println("=== GENERACION DE CODIGO ===");
-
-            // 7.1 Declarar variables globales (usa SymbolTable internamente)
-            CodeGenerator.declareAllGlobalVariables();
-
-            // 7.2 Construir nombre de archivo de salida (.asm)
-            String outName;
-            int dot = sourcePath.lastIndexOf('.');
-            if (dot == -1) {
-                outName = sourcePath + ".asm";
-            } else {
-                outName = sourcePath.substring(0, dot) + ".asm";
-            }
-
-            // 7.3 Generar archivo final
-            CodeGenerator.generateFile(outName);
-
-            // (Opcional) ver en consola lo generado
-            // CodeGenerator.printGeneratedCode();
-            // CodeGenerator.printStats();
-
-        } else {
-            System.out.println();
-            System.out.println("✗ Hay errores en el programa. No se generará archivo de código.");
-        }
-
-        System.out.println();
         System.out.println("=== Fin del analisis P3 ===");
     }
 
