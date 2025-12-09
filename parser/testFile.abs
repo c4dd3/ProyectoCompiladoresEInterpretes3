@@ -1,34 +1,19 @@
 PROGRAM Prueba
 
 VAR
-
-numero,limite,contador: INT;  
-nombre, apellido: STRING;
-a, i: INT;
-
-FUNCTION funcion4 ():INT
-BEGIN
- funcion4:=0;
-END
-
-
-FUNCTION funcion5 (int x):INT
-BEGIN
- a:= a + 6;
- funcion5:=0; 
-END
-
-
-PROCEDURE funcionBuena(int x)
-BEGIN
-   WHILE (a>8) DO
-   BEGIN
-      i:=0;
-   END
-   x := x+1;
-END
-
+  numero, limite, contador, a, i: INT;
+  nombre, apellido: STRING;
 
 BEGIN
- write("Fin");
+  numero := 1;
+  limite := 2;
+  contador := numero + limite;
+  a := 5;
+  i := 0;
+
+  a := a + 1;
+  a := a - 1;
+
+  WRITE("Fin");
+  WRITE(a);
 END

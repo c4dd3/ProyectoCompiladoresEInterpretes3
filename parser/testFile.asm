@@ -15,51 +15,61 @@ section .bss
     numero RESD 1
     limite RESD 1
     contador RESD 1
-    nombre RESB 256
-    apellido RESB 256
     a RESD 1
     i RESD 1
+    nombre RESB 256
+    apellido RESB 256
     t0 RESD 1
     t1 RESD 1
     t2 RESD 1
     t3 RESD 1
     t4 RESD 1
-    t5 RESD 1
 
 section .text
 global _start
 
 _start:
-    ; Asignación: funcion4 = 0
-    MOV DWORD [funcion4], 0
-    ; Asignación: t0 = 6
-    MOV DWORD [t0], 6
-    ; t1 = a + t0
-    MOV EAX, [a]
-    ADD EAX, [t0]
-    MOV [t1], EAX
-    ; Asignación: a = t1
-    MOV EAX, [t1]
-    MOV [a], EAX
-    ; Asignación: funcion5 = 0
-    MOV DWORD [funcion5], 0
-    ; Asignación: t2 = 8
-    MOV DWORD [t2], 8
-    t3 = a > t2
+    ; Asignación: numero = 1
+    MOV DWORD [numero], 1
+    ; Asignación: limite = 2
+    MOV DWORD [limite], 2
+    ; t0 = numero + limite
+    MOV EAX, [numero]
+    ADD EAX, [limite]
+    MOV [t0], EAX
+    ; Asignación: contador = t0
+    MOV EAX, [t0]
+    MOV [contador], EAX
+    ; Asignación: a = 5
+    MOV DWORD [a], 5
     ; Asignación: i = 0
     MOV DWORD [i], 0
-    ; Asignación: t4 = 1
-    MOV DWORD [t4], 1
-    ; t5 = x + t4
-    MOV EAX, [x]
-    ADD EAX, [t4]
-    MOV [t5], EAX
-    ; Asignación: x = t5
-    MOV EAX, [t5]
-    MOV [x], EAX
+    ; Asignación: t1 = 1
+    MOV DWORD [t1], 1
+    ; t2 = a + t1
+    MOV EAX, [a]
+    ADD EAX, [t1]
+    MOV [t2], EAX
+    ; Asignación: a = t2
+    MOV EAX, [t2]
+    MOV [a], EAX
+    ; Asignación: t3 = 1
+    MOV DWORD [t3], 1
+    ; t4 = a - t3
+    MOV EAX, [a]
+    SUB EAX, [t3]
+    MOV [t4], EAX
+    ; Asignación: a = t4
+    MOV EAX, [t4]
+    MOV [a], EAX
     ; WRITE(string)
     PUSH str0
     PUSH fmt_str
+    CALL printf
+    ADD ESP, 8
+    ; WRITE(a)
+    PUSH DWORD [a]
+    PUSH fmt_int
     CALL printf
     ADD ESP, 8
     ; === Variables Globales ===
