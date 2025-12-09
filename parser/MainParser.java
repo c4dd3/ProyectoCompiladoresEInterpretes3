@@ -9,12 +9,12 @@ import scanner.Scanner;
 
 public class MainParser {
 
-    private static final boolean SHOW_TOKENS = false; // si luego querés mostrar tokens, lo vemos aparte
+    private static final boolean SHOW_TOKENS = false;
 
     public static void run(String sourcePath) {
         System.out.println("=== Analizando (P3): " + sourcePath + " ===");
 
-    // Fase 1: reset de estructuras semánticas y generador
+    // reset de estructuras semánticas y generador
         SymbolTable.reset();
         SemanticAnalyzer.reset();
         CodeGenerator.reset(); 
@@ -93,7 +93,6 @@ public class MainParser {
                 }
                 java.nio.file.Path outPath = srcPath.resolveSibling(baseName + ".asm");
 
-                // Por seguridad, declarar globals desde la tabla antes de escribir
                 CodeGenerator.declareAllGlobalVariables();
                 CodeGenerator.generateFile(outPath.toString());
                 System.out.println("[CODE GEN] Archivo ASM generado: " + outPath);

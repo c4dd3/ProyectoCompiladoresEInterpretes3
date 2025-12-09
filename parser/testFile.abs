@@ -1,27 +1,26 @@
 PROGRAM b
 VAR
-    x: INT ;
-    y: INT ;
+
+x, y: INT ;
+y: INT ;
+
+
+FUNCTION func( INT a): INT 
+VAR
+ a, b, c: INT;
+ y: INT ;   
+BEGIN
+ y:= b + 2;
+ y:= z + 2;
  
+END
+
+FUNCTION func(  INT a ):
+BEGIN
+ y:= a + 2;
+END
 
 BEGIN
-
-	x:= 10;
-	y:= 20;
-
-        x := 4 + 5;
-	
-	IF y = 15 THEN
-        BEGIN
-            x := x * y;
-        END
-	ELSE
-        BEGIN
-            x := x - y;
-        END
-	x++;
-	y--;
-	 
-	WRITE(x);
-	WRITE(y);
+ y:= z + 2;
+ y := x +7;  
 END

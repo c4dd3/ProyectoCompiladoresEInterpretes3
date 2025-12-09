@@ -36,6 +36,10 @@ _start:
     SETE AL
     MOVZX EAX, AL
     MOV [t1], EAX
+    ; === IF ===
+    ; if (!t1) goto L0
+    CMP DWORD [t1], 0
+    JE L0
     ; t2 = x * y
     MOV EAX, [x]
     IMUL EAX, [y]
@@ -43,6 +47,9 @@ _start:
     ; Asignación: x = t2
     MOV EAX, [t2]
     MOV [x], EAX
+    JMP L1
+L0:
+    ; === ELSE ===
     ; t3 = x - y
     MOV EAX, [x]
     SUB EAX, [y]
@@ -50,6 +57,8 @@ _start:
     ; Asignación: x = t3
     MOV EAX, [t3]
     MOV [x], EAX
+L1:
+    ; === END IF-ELSE ===
     ; x++
     INC DWORD [x]
     ; y--
