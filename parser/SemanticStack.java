@@ -167,6 +167,18 @@ public class SemanticStack {
             return;
         }
         
+        // Materializar constantes en temporales para usarlas como operandos en memoria
+        if (left.isConst && left.type.equals("INT")) {
+            String t = CodeGenerator.newTemp();
+            CodeGenerator.emitAssignmentConst(t, left.getIntValue());
+            left = new StackEntry("INT", t);
+        }
+        if (right.isConst && right.type.equals("INT")) {
+            String t = CodeGenerator.newTemp();
+            CodeGenerator.emitAssignmentConst(t, right.getIntValue());
+            right = new StackEntry("INT", t);
+        }
+
         // Si no son constantes, generar código temporal
         String temp = CodeGenerator.newTemp();
         switch (operator) {
@@ -188,6 +200,18 @@ public class SemanticStack {
         StackEntry right = pop();
         StackEntry left = pop();
         
+        // Materializar constantes en temporales para comparaciones
+        if (left.isConst && left.type.equals("INT")) {
+            String t = CodeGenerator.newTemp();
+            CodeGenerator.emitAssignmentConst(t, left.getIntValue());
+            left = new StackEntry("INT", t);
+        }
+        if (right.isConst && right.type.equals("INT")) {
+            String t = CodeGenerator.newTemp();
+            CodeGenerator.emitAssignmentConst(t, right.getIntValue());
+            right = new StackEntry("INT", t);
+        }
+
         String temp = CodeGenerator.newTemp();
         if ("=".equals(operator)) {
             CodeGenerator.emitEqual(temp, left.value, right.value);

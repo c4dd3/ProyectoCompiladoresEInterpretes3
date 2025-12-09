@@ -177,7 +177,7 @@ non terminal
     // Main
     cuerpo_main;
   
-// Tipados para semántica
+// Tipados para semÃ¡ntica
 non terminal java.util.List<IdInfo> lista_identificadores, mas_identificadores;
 non terminal String tipo;
 non terminal java.util.List<ParamInfo> parametros, mas_parametros;
@@ -214,7 +214,7 @@ programa ::= PROGRAM IDENTIFICADOR variables_globales funciones_globales cuerpo_
 
 /* ========== Declaracion de Variables Globales ========== */
 variables_globales ::= VAR lista_declaraciones_globales
-                     | /* vacío */   
+                     | /* vacÃ­o */   
                      ;
 
 lista_declaraciones_globales ::= declaracion_variable_global
@@ -223,11 +223,11 @@ lista_declaraciones_globales ::= declaracion_variable_global
 
 declaracion_variable_global ::= lista_identificadores:ids DOS_PUNTOS tipo:t PUNTO_COMA
     {:
-        // Para cada identificador declarado, lo agregamos a la tabla de símbolos
+        // Para cada identificador declarado, lo agregamos a la tabla de sÃ­mbolos
         for (IdInfo id : ids) {
             boolean ok = SymbolTable.addVariable(id.name, t, id.line);
             if (!ok) {
-                // Variable doblemente definida en el mismo ámbito
+                // Variable doblemente definida en el mismo Ã¡mbito
                 SemanticAnalyzer.addError(
                     id.line,
                     "Variable '" + id.name + "' ya esta definida en el ambito " + SymbolTable.getCurrentScope(),
@@ -235,7 +235,7 @@ declaracion_variable_global ::= lista_identificadores:ids DOS_PUNTOS tipo:t PUNT
                 );
             }
         }
-        // Declarar variables globales en el generador de código
+        // Declarar variables globales en el generador de cÃ³digo
         for (IdInfo id : ids) {
             CodeGenerator.declareGlobalVariable(id.name, t);
         }
@@ -251,7 +251,7 @@ lista_identificadores ::= IDENTIFICADOR:id mas_identificadores:resto
         java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
         // Symbol completo del primer IDENTIFICADOR
-        // Producción: IDENTIFICADOR mas_identificadores  → largo = 2
+        // ProducciÃ³n: IDENTIFICADOR mas_identificadores  â largo = 2
         // Stack: top-1 = IDENTIFICADOR, top-0 = mas_identificadores
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
@@ -261,7 +261,7 @@ lista_identificadores ::= IDENTIFICADOR:id mas_identificadores:resto
 
         list.add(new IdInfo(name, line));
 
-        java.util.List<IdInfo> tail = resto; // ya está tipado como List<IdInfo>
+        java.util.List<IdInfo> tail = resto; // ya estÃ¡ tipado como List<IdInfo>
         if (tail != null) list.addAll(tail);
 
         RESULT = list;
@@ -272,7 +272,7 @@ mas_identificadores ::= COMA IDENTIFICADOR:id mas_identificadores:resto
     {:
         java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
-        // Producción: COMA IDENTIFICADOR mas_identificadores  → largo = 3
+        // ProducciÃ³n: COMA IDENTIFICADOR mas_identificadores  â largo = 3
         // Stack:
         //   top-2 = COMA
         //   top-1 = IDENTIFICADOR
@@ -290,7 +290,7 @@ mas_identificadores ::= COMA IDENTIFICADOR:id mas_identificadores:resto
 
         RESULT = list;
     :}
-    | /* vacío */
+    | /* vacÃ­o */
     {:
         RESULT = new java.util.ArrayList<IdInfo>();
     :}
@@ -329,10 +329,10 @@ funcion_global ::=
             );
         }
 
-        // Abrir scope para la función
+        // Abrir scope para la funciÃ³n
         SymbolTable.enterScope(id);
 
-        // Insertar parámetros como variables del scope de la función
+        // Insertar parÃ¡metros como variables del scope de la funciÃ³n
         for (ParamInfo p : plist) {
             boolean okVar = SymbolTable.addVariable(p.name, p.type, p.line);
             if (!okVar) {
@@ -346,7 +346,7 @@ funcion_global ::=
     :}
     cuerpo_funcion
     {:
-        // Salir del scope de la función
+        // Salir del scope de la funciÃ³n
         SymbolTable.exitScope();
     :}
   | FUNCTION IDENTIFICADOR PARENTESIS_IZQ parametros error DOS_PUNTOS tipo cuerpo_funcion
@@ -367,7 +367,7 @@ parametros ::= tipo:t IDENTIFICADOR:id mas_parametros:resto
     {:
         java.util.List<ParamInfo> list = new java.util.ArrayList<>();
 
-        // Producción: tipo IDENTIFICADOR mas_parametros  (longitud 3)
+        // ProducciÃ³n: tipo IDENTIFICADOR mas_parametros  (longitud 3)
         // Stack: top-2 = tipo, top-1 = IDENTIFICADOR, top-0 = mas_parametros
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
@@ -391,7 +391,7 @@ mas_parametros ::= COMA tipo:t IDENTIFICADOR:id mas_parametros:resto
     {:
         java.util.List<ParamInfo> list = new java.util.ArrayList<>();
 
-        // Producción: COMA tipo IDENTIFICADOR mas_parametros (longitud 4)
+        // ProducciÃ³n: COMA tipo IDENTIFICADOR mas_parametros (longitud 4)
         // Stack: top-3 = COMA, top-2 = tipo, top-1 = IDENTIFICADOR, top-0 = mas_parametros
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
@@ -425,21 +425,21 @@ bloque_funcion ::= sentencias retorno
 
 retorno ::= IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
     {:
-        // Línea del identificador del "retorno"
+        // LÃ­nea del identificador del "retorno"
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-        // Resultado de la expresión de retorno
+        // Resultado de la expresiÃ³n de retorno
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
-        // Nombre del scope actual (debería ser el nombre de la función)
+        // Nombre del scope actual (deberÃ­a ser el nombre de la funciÃ³n)
         String currentScope = SymbolTable.getCurrentScope();
 
-        // 1) Verificar que se está retornando a la función correcta
+        // 1) Verificar que se estÃ¡ retornando a la funciÃ³n correcta
         if (!id.equals(currentScope)) {
             SemanticAnalyzer.addError(
                 line,
@@ -449,7 +449,7 @@ retorno ::= IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
             );
         }
 
-        // 2) Verificar tipo de retorno vs tipo de la funci�n
+        // 2) Verificar tipo de retorno vs tipo de la función
         SymbolTable.Symbol funSym = SymbolTable.lookupInScope(currentScope, "GLOBAL");
         if (funSym != null && expr != null && !expr.type.equals("ERROR")) {
 
@@ -466,7 +466,7 @@ retorno ::= IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
                     "TIPO_RETORNO_INCOMPATIBLE"
                 );
             } else {
-                // C�digo intermedio para el retorno: nombreFuncion = valor
+                // Código intermedio para el retorno: nombreFuncion = valor
                 if (expr.isConst && expr.type.equals("INT")) {
                     CodeGenerator.emitAssignmentConst(currentScope, expr.getIntValue());
                 } else {
@@ -507,7 +507,7 @@ procedure_global ::=
 
         SymbolTable.enterScope(id);
 
-        // Insertar parámetros como variables del scope del procedimiento
+        // Insertar parÃ¡metros como variables del scope del procedimiento
         for (ParamInfo p : plist) {
             boolean okVar = SymbolTable.addVariable(p.name, p.type, p.line);
             if (!okVar) {
@@ -533,7 +533,7 @@ cuerpo_procedure ::= BEGIN bloque_procedure END
                    ;
 
 bloque_procedure ::= sentencias
-                   | /* vacío */
+                   | /* vacÃ­o */
                    ;
 
 /* ========== Sentencias (dentro de funciones/procedures) ========== */
@@ -544,18 +544,18 @@ sentencias ::= sentencia
 sentencia ::=
     IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
     {:
-        // Línea del identificador
+        // LÃ­nea del identificador
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-        // Resultado de la expresión en la pila semántica
+        // Resultado de la expresiÃ³n en la pila semÃ¡ntica
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
-        // Buscar la variable en la tabla de símbolos
+        // Buscar la variable en la tabla de sÃ­mbolos
         SymbolTable.Symbol sym = SymbolTable.lookup(id);
         if (sym == null) {
             SemanticAnalyzer.addError(
@@ -577,7 +577,7 @@ sentencia ::=
                     "TIPOS_INCOMPATIBLES"
                 );
             } else {
-                // Código intermedio: id = expr.value
+                // CÃ³digo intermedio: id = expr.value
                 if (expr.isConst && expr.type.equals("INT")) {
                     CodeGenerator.emitAssignmentConst(id, expr.getIntValue());
                 } else {
@@ -610,7 +610,7 @@ sentencia ::=
                 "TIPO_NO_NUMERICO"
             );
         } else {
-            // x++  →  x = x + 1
+            // x++  â  x = x + 1
             CodeGenerator.emitIncrement(id);
         }
     :}
@@ -634,7 +634,7 @@ sentencia ::=
                 "TIPO_NO_NUMERICO"
             );
         } else {
-            // x--  →  x = x - 1
+            // x--  â  x = x - 1
             CodeGenerator.emitDecrement(id);
         }
     :}
@@ -671,13 +671,13 @@ sentencia_main ::=
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-        // Resultado de la expresión en la pila semántica
+        // Resultado de la expresiÃ³n en la pila semÃ¡ntica
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
-        // Buscar la variable en la tabla de símbolos
+        // Buscar la variable en la tabla de sÃ­mbolos
         SymbolTable.Symbol sym = SymbolTable.lookup(id);
         if (sym == null) {
             SemanticAnalyzer.addError(
@@ -781,11 +781,11 @@ termino   ::= termino POR factor
             | factor
             ;
 
-/* Aquí viene el factor actualizado */
+/* AquÃ­ viene el factor actualizado */
 factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
          | IDENTIFICADOR:id
            {:
-               // línea del identificador
+               // lÃ­nea del identificador
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-0);
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
@@ -813,7 +813,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
            {:
                SemanticStack.loadConstant("CHAR", ch.toString());
            :}
-         /* si querés, puedes tratar OCTAL/HEX como INT también */
+         /* si querÃ©s, puedes tratar OCTAL/HEX como INT tambiÃ©n */
          | LIT_OCTAL:oct
            {:
                SemanticStack.loadConstant("INT", oct.toString());
@@ -824,16 +824,16 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
            :}
          | MENOS factor
            {:
-               // operador unario - (negación)
+               // operador unario - (negaciÃ³n)
                SemanticStack.processUnaryOp("-");
            :}
          | MAS factor
            {:
-               // + unario → lo ignoramos (no cambia el valor)
+               // + unario â lo ignoramos (no cambia el valor)
            :}
          | IDENTIFICADOR:id INCREMENTO
            {:
-               // Post-incremento: valor de la expresión = valor ANTERIOR de id
+               // Post-incremento: valor de la expresiÃ³n = valor ANTERIOR de id
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
@@ -855,7 +855,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
                    );
                    SemanticStack.loadConstant("ERROR", "0");
                } else {
-                   // Usar valor actual en la expresión
+                   // Usar valor actual en la expresiÃ³n
                    SemanticStack.loadVariable(id, line);
                    // y luego hacer el efecto lateral x = x + 1
                    CodeGenerator.emitIncrement(id);
@@ -863,7 +863,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
            :}
          | IDENTIFICADOR:id DECREMENTO
            {:
-               // Post-decremento: valor de la expresión = valor ANTERIOR de id
+               // Post-decremento: valor de la expresiÃ³n = valor ANTERIOR de id
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
@@ -980,7 +980,7 @@ estructura_control ::= while_stmt
 
 while_stmt ::= WHILE condicion DO BEGIN sentencias_main END
     {:
-        // Verificar que la condición sea de tipo BOOL
+        // Verificar que la condiciÃ³n sea de tipo BOOL
         SemanticStack.StackEntry cond = null;
         if (SemanticStack.size() > 0) {
             cond = SemanticStack.pop();
@@ -1112,17 +1112,17 @@ read_stmt ::=
     | READ PARENTESIS_IZQ IDENTIFICADOR COMA error PARENTESIS_DER PUNTO_COMA
         {: parser.report_error("Error: 'READ' solo acepta una variable. Formato correcto: READ(variable);", null); :}
     | READ PARENTESIS_IZQ error PARENTESIS_DER PUNTO_COMA
-        {: parser.report_error("Argumento inválido en READ. Use un identificador de variable", null); :}
+        {: parser.report_error("Argumento invÃ¡lido en READ. Use un identificador de variable", null); :}
     | READ error PUNTO_COMA
-        {: parser.report_error("Falta '(' después de READ. Formato: 'READ();' o 'READ(variable);'", null); :}
+        {: parser.report_error("Falta '(' despuÃ©s de READ. Formato: 'READ();' o 'READ(variable);'", null); :}
     | READ PARENTESIS_IZQ IDENTIFICADOR error PUNTO_COMA
-        {: parser.report_error("Falta ')' después del identificador en READ", null); :}
+        {: parser.report_error("Falta ')' despuÃ©s del identificador en READ", null); :}
     ;
 
 
 write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones:args PARENTESIS_DER PUNTO_COMA
     {:
-        // Generar una instrucci�n WRITE por cada expresi�n
+        // Generar una instrucción WRITE por cada expresión
         if (args != null) {
             for (SemanticStack.StackEntry entry : args) {
                 if (entry == null) continue;
@@ -1136,14 +1136,11 @@ write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones:args PARENTESIS_DER PUNTO_
                         CodeGenerator.emitWriteInt(entry.value);
                     }
                 } else if ("STRING".equals(entry.type)) {
-                    String label = entry.value;
-                    if (entry.isConst) {
-                        String content = entry.value;
-                        if (content.startsWith("\"") && content.endsWith("\"") && content.length() >= 2) {
-                            content = content.substring(1, content.length() - 1);
-                        }
-                        label = CodeGenerator.addStringLiteral(content);
+                    String content = entry.value;
+                    if (content.startsWith("\"") && content.endsWith("\"") && content.length() >= 2) {
+                        content = content.substring(1, content.length() - 1);
                     }
+                    String label = CodeGenerator.addStringLiteral(content);
                     CodeGenerator.emitWriteString(label);
                 }
             }
@@ -1167,19 +1164,19 @@ llamada_funcion ::=
         SymbolTable.Symbol sym = SymbolTable.lookupInScope(id, "GLOBAL");
         if (sym == null || 
             !(sym.category.equals("FUNCTION") || sym.category.equals("PROCEDURE"))) {
-            // No está definida como función/procedimiento
+            // No estÃ¡ definida como funciÃ³n/procedimiento
             SemanticAnalyzer.addError(
                 line,
                 "Llamada a '" + id + "' que no esta definida como funcion o procedimiento",
                 "FUNCION_NO_DEFINIDA"
             );
         } else {
-            // Tipos de parámetros formales
+            // Tipos de parÃ¡metros formales
             java.util.List<String> formalTypes = sym.paramTypes;
             int expected = (formalTypes != null ? formalTypes.size() : 0);
             int received = (args != null ? args.size() : 0);
 
-            // Verificar cantidad de parámetros
+            // Verificar cantidad de parÃ¡metros
             if (expected != received) {
                 SemanticAnalyzer.addError(
                     line,
@@ -1189,7 +1186,7 @@ llamada_funcion ::=
                     "CANT_PARAM_INCORRECTA"
                 );
             } else {
-                // Verificar tipos parámetro por parámetro
+                // Verificar tipos parÃ¡metro por parÃ¡metro
                 for (int i = 0; i < expected; i++) {
                     String expectedType = formalTypes.get(i);
 
@@ -1197,7 +1194,7 @@ llamada_funcion ::=
                     String argType = (argEntry != null ? argEntry.type : "ERROR");
 
                     if ("ERROR".equals(argType)) {
-                        // Ya hubo error antes en esa expresión, no duplicamos
+                        // Ya hubo error antes en esa expresiÃ³n, no duplicamos
                         continue;
                     }
 
@@ -1217,7 +1214,7 @@ llamada_funcion ::=
                 }
             }
 
-            // Traducción muy simple de la llamada (sin manejar retorno aún)
+            // TraducciÃ³n muy simple de la llamada (sin manejar retorno aÃºn)
             CodeGenerator.emitCode("CALL " + id);
         }
     :}
@@ -1236,7 +1233,7 @@ llamada_funcion ::=
                 "FUNCION_NO_DEFINIDA"
             );
         } else {
-            // Verificar que la función/procedimiento no espere parámetros
+            // Verificar que la funciÃ³n/procedimiento no espere parÃ¡metros
             java.util.List<String> formalTypes = sym.paramTypes;
             int expected = (formalTypes != null ? formalTypes.size() : 0);
 
@@ -1256,14 +1253,14 @@ llamada_funcion ::=
 
 lista_expresiones ::= expresion mas_expresiones:resto
     {:
-        // Sacamos el resultado de la primera expresión de la lista
+        // Sacamos el resultado de la primera expresiÃ³n de la lista
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
         java.util.List<SemanticStack.StackEntry> list = new java.util.ArrayList<>();
-        list.add(expr); // puede ser null si hubo algún problema
+        list.add(expr); // puede ser null si hubo algÃºn problema
 
         if (resto != null) {
             list.addAll(resto);
@@ -1289,7 +1286,7 @@ mas_expresiones ::= COMA expresion mas_expresiones:resto
 
         RESULT = list;
     :}
-  | /* vacío */
+  | /* vacÃ­o */
     {:
         RESULT = new java.util.ArrayList<SemanticStack.StackEntry>();
     :}
@@ -1305,5 +1302,3 @@ tipo ::= INT
        | STRING
        {: RESULT = "STRING"; :}
        ;
-
-

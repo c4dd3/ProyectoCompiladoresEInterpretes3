@@ -990,11 +990,11 @@ class CUP$Parser$actions {
 		int tright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
 		String t = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
-        // Para cada identificador declarado, lo agregamos a la tabla de símbolos
+        // Para cada identificador declarado, lo agregamos a la tabla de sÃ­mbolos
         for (IdInfo id : ids) {
             boolean ok = SymbolTable.addVariable(id.name, t, id.line);
             if (!ok) {
-                // Variable doblemente definida en el mismo ámbito
+                // Variable doblemente definida en el mismo Ã¡mbito
                 SemanticAnalyzer.addError(
                     id.line,
                     "Variable '" + id.name + "' ya esta definida en el ambito " + SymbolTable.getCurrentScope(),
@@ -1002,7 +1002,7 @@ class CUP$Parser$actions {
                 );
             }
         }
-        // Declarar variables globales en el generador de código
+        // Declarar variables globales en el generador de cÃ³digo
         for (IdInfo id : ids) {
             CodeGenerator.declareGlobalVariable(id.name, t);
         }
@@ -1043,7 +1043,7 @@ class CUP$Parser$actions {
         java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
         // Symbol completo del primer IDENTIFICADOR
-        // Producción: IDENTIFICADOR mas_identificadores  → largo = 2
+        // ProducciÃ³n: IDENTIFICADOR mas_identificadores  â largo = 2
         // Stack: top-1 = IDENTIFICADOR, top-0 = mas_identificadores
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
@@ -1053,7 +1053,7 @@ class CUP$Parser$actions {
 
         list.add(new IdInfo(name, line));
 
-        java.util.List<IdInfo> tail = resto; // ya está tipado como List<IdInfo>
+        java.util.List<IdInfo> tail = resto; // ya estÃ¡ tipado como List<IdInfo>
         if (tail != null) list.addAll(tail);
 
         RESULT = list;
@@ -1075,7 +1075,7 @@ class CUP$Parser$actions {
 		
         java.util.List<IdInfo> list = new java.util.ArrayList<>();
 
-        // Producción: COMA IDENTIFICADOR mas_identificadores  → largo = 3
+        // ProducciÃ³n: COMA IDENTIFICADOR mas_identificadores  â largo = 3
         // Stack:
         //   top-2 = COMA
         //   top-1 = IDENTIFICADOR
@@ -1172,10 +1172,10 @@ class CUP$Parser$actions {
             );
         }
 
-        // Abrir scope para la función
+        // Abrir scope para la funciÃ³n
         SymbolTable.enterScope(id);
 
-        // Insertar parámetros como variables del scope de la función
+        // Insertar parÃ¡metros como variables del scope de la funciÃ³n
         for (ParamInfo p : plist) {
             boolean okVar = SymbolTable.addVariable(p.name, p.type, p.line);
             if (!okVar) {
@@ -1207,7 +1207,7 @@ class CUP$Parser$actions {
 		int tright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)).right;
 		String t = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2)).value;
 		
-        // Salir del scope de la función
+        // Salir del scope de la funciÃ³n
         SymbolTable.exitScope();
     
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("funcion_global",6, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-8)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
@@ -1284,7 +1284,7 @@ class CUP$Parser$actions {
 		
         java.util.List<ParamInfo> list = new java.util.ArrayList<>();
 
-        // Producción: tipo IDENTIFICADOR mas_parametros  (longitud 3)
+        // ProducciÃ³n: tipo IDENTIFICADOR mas_parametros  (longitud 3)
         // Stack: top-2 = tipo, top-1 = IDENTIFICADOR, top-0 = mas_parametros
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
@@ -1329,7 +1329,7 @@ class CUP$Parser$actions {
 		
         java.util.List<ParamInfo> list = new java.util.ArrayList<>();
 
-        // Producción: COMA tipo IDENTIFICADOR mas_parametros (longitud 4)
+        // ProducciÃ³n: COMA tipo IDENTIFICADOR mas_parametros (longitud 4)
         // Stack: top-3 = COMA, top-2 = tipo, top-1 = IDENTIFICADOR, top-0 = mas_parametros
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
@@ -1420,21 +1420,21 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
 		
-        // Línea del identificador del "retorno"
+        // LÃ­nea del identificador del "retorno"
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-        // Resultado de la expresión de retorno
+        // Resultado de la expresiÃ³n de retorno
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
-        // Nombre del scope actual (debería ser el nombre de la función)
+        // Nombre del scope actual (deberÃ­a ser el nombre de la funciÃ³n)
         String currentScope = SymbolTable.getCurrentScope();
 
-        // 1) Verificar que se está retornando a la función correcta
+        // 1) Verificar que se estÃ¡ retornando a la funciÃ³n correcta
         if (!id.equals(currentScope)) {
             SemanticAnalyzer.addError(
                 line,
@@ -1444,7 +1444,7 @@ class CUP$Parser$actions {
             );
         }
 
-        // 2) Verificar tipo de retorno vs tipo de la funci�n
+        // 2) Verificar tipo de retorno vs tipo de la función
         SymbolTable.Symbol funSym = SymbolTable.lookupInScope(currentScope, "GLOBAL");
         if (funSym != null && expr != null && !expr.type.equals("ERROR")) {
 
@@ -1461,7 +1461,7 @@ class CUP$Parser$actions {
                     "TIPO_RETORNO_INCOMPATIBLE"
                 );
             } else {
-                // C�digo intermedio para el retorno: nombreFuncion = valor
+                // Código intermedio para el retorno: nombreFuncion = valor
                 if (expr.isConst && expr.type.equals("INT")) {
                     CodeGenerator.emitAssignmentConst(currentScope, expr.getIntValue());
                 } else {
@@ -1537,7 +1537,7 @@ class CUP$Parser$actions {
 
         SymbolTable.enterScope(id);
 
-        // Insertar parámetros como variables del scope del procedimiento
+        // Insertar parÃ¡metros como variables del scope del procedimiento
         for (ParamInfo p : plist) {
             boolean okVar = SymbolTable.addVariable(p.name, p.type, p.line);
             if (!okVar) {
@@ -1661,18 +1661,18 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
 		
-        // Línea del identificador
+        // LÃ­nea del identificador
         java_cup.runtime.Symbol idSym =
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-        // Resultado de la expresión en la pila semántica
+        // Resultado de la expresiÃ³n en la pila semÃ¡ntica
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
-        // Buscar la variable en la tabla de símbolos
+        // Buscar la variable en la tabla de sÃ­mbolos
         SymbolTable.Symbol sym = SymbolTable.lookup(id);
         if (sym == null) {
             SemanticAnalyzer.addError(
@@ -1694,7 +1694,7 @@ class CUP$Parser$actions {
                     "TIPOS_INCOMPATIBLES"
                 );
             } else {
-                // Código intermedio: id = expr.value
+                // CÃ³digo intermedio: id = expr.value
                 if (expr.isConst && expr.type.equals("INT")) {
                     CodeGenerator.emitAssignmentConst(id, expr.getIntValue());
                 } else {
@@ -1769,7 +1769,7 @@ class CUP$Parser$actions {
                 "TIPO_NO_NUMERICO"
             );
         } else {
-            // x++  →  x = x + 1
+            // x++  â  x = x + 1
             CodeGenerator.emitIncrement(id);
         }
     
@@ -1803,7 +1803,7 @@ class CUP$Parser$actions {
                 "TIPO_NO_NUMERICO"
             );
         } else {
-            // x--  →  x = x - 1
+            // x--  â  x = x - 1
             CodeGenerator.emitDecrement(id);
         }
     
@@ -1909,13 +1909,13 @@ class CUP$Parser$actions {
             (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
         int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
 
-        // Resultado de la expresión en la pila semántica
+        // Resultado de la expresiÃ³n en la pila semÃ¡ntica
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
-        // Buscar la variable en la tabla de símbolos
+        // Buscar la variable en la tabla de sÃ­mbolos
         SymbolTable.Symbol sym = SymbolTable.lookup(id);
         if (sym == null) {
             SemanticAnalyzer.addError(
@@ -2150,7 +2150,7 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		
-               // línea del identificador
+               // lÃ­nea del identificador
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-0);
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
@@ -2263,7 +2263,7 @@ class CUP$Parser$actions {
             {
               Object RESULT =null;
 		
-               // operador unario - (negación)
+               // operador unario - (negaciÃ³n)
                SemanticStack.processUnaryOp("-");
            
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
@@ -2275,7 +2275,7 @@ class CUP$Parser$actions {
             {
               Object RESULT =null;
 		
-               // + unario → lo ignoramos (no cambia el valor)
+               // + unario â lo ignoramos (no cambia el valor)
            
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("factor",19, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2289,7 +2289,7 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
-               // Post-incremento: valor de la expresión = valor ANTERIOR de id
+               // Post-incremento: valor de la expresiÃ³n = valor ANTERIOR de id
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
@@ -2311,7 +2311,7 @@ class CUP$Parser$actions {
                    );
                    SemanticStack.loadConstant("ERROR", "0");
                } else {
-                   // Usar valor actual en la expresión
+                   // Usar valor actual en la expresiÃ³n
                    SemanticStack.loadVariable(id, line);
                    // y luego hacer el efecto lateral x = x + 1
                    CodeGenerator.emitIncrement(id);
@@ -2329,7 +2329,7 @@ class CUP$Parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
 		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
-               // Post-decremento: valor de la expresión = valor ANTERIOR de id
+               // Post-decremento: valor de la expresiÃ³n = valor ANTERIOR de id
                java_cup.runtime.Symbol idSym =
                    (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1);
                int line = (idSym.left >= 0 ? idSym.left + 1 : 1);
@@ -2581,7 +2581,7 @@ class CUP$Parser$actions {
             {
               Object RESULT =null;
 		
-        // Verificar que la condición sea de tipo BOOL
+        // Verificar que la condiciÃ³n sea de tipo BOOL
         SemanticStack.StackEntry cond = null;
         if (SemanticStack.size() > 0) {
             cond = SemanticStack.pop();
@@ -2880,7 +2880,7 @@ class CUP$Parser$actions {
           case 137: // read_stmt ::= READ PARENTESIS_IZQ error PARENTESIS_DER PUNTO_COMA 
             {
               Object RESULT =null;
-		 parser.report_error("Argumento inválido en READ. Use un identificador de variable", null); 
+		 parser.report_error("Argumento invÃ¡lido en READ. Use un identificador de variable", null); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("read_stmt",28, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2889,7 +2889,7 @@ class CUP$Parser$actions {
           case 138: // read_stmt ::= READ error PUNTO_COMA 
             {
               Object RESULT =null;
-		 parser.report_error("Falta '(' después de READ. Formato: 'READ();' o 'READ(variable);'", null); 
+		 parser.report_error("Falta '(' despuÃ©s de READ. Formato: 'READ();' o 'READ(variable);'", null); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("read_stmt",28, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2898,7 +2898,7 @@ class CUP$Parser$actions {
           case 139: // read_stmt ::= READ PARENTESIS_IZQ IDENTIFICADOR error PUNTO_COMA 
             {
               Object RESULT =null;
-		 parser.report_error("Falta ')' después del identificador en READ", null); 
+		 parser.report_error("Falta ')' despuÃ©s del identificador en READ", null); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("read_stmt",28, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -2911,7 +2911,7 @@ class CUP$Parser$actions {
 		int argsright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)).right;
 		java.util.List<SemanticStack.StackEntry> args = (java.util.List<SemanticStack.StackEntry>)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-2)).value;
 		
-        // Generar una instrucci�n WRITE por cada expresi�n
+        // Generar una instrucción WRITE por cada expresión
         if (args != null) {
             for (SemanticStack.StackEntry entry : args) {
                 if (entry == null) continue;
@@ -2925,14 +2925,11 @@ class CUP$Parser$actions {
                         CodeGenerator.emitWriteInt(entry.value);
                     }
                 } else if ("STRING".equals(entry.type)) {
-                    String label = entry.value;
-                    if (entry.isConst) {
-                        String content = entry.value;
-                        if (content.startsWith("\"") && content.endsWith("\"") && content.length() >= 2) {
-                            content = content.substring(1, content.length() - 1);
-                        }
-                        label = CodeGenerator.addStringLiteral(content);
+                    String content = entry.value;
+                    if (content.startsWith("\"") && content.endsWith("\"") && content.length() >= 2) {
+                        content = content.substring(1, content.length() - 1);
                     }
+                    String label = CodeGenerator.addStringLiteral(content);
                     CodeGenerator.emitWriteString(label);
                 }
             }
@@ -2978,19 +2975,19 @@ class CUP$Parser$actions {
         SymbolTable.Symbol sym = SymbolTable.lookupInScope(id, "GLOBAL");
         if (sym == null || 
             !(sym.category.equals("FUNCTION") || sym.category.equals("PROCEDURE"))) {
-            // No está definida como función/procedimiento
+            // No estÃ¡ definida como funciÃ³n/procedimiento
             SemanticAnalyzer.addError(
                 line,
                 "Llamada a '" + id + "' que no esta definida como funcion o procedimiento",
                 "FUNCION_NO_DEFINIDA"
             );
         } else {
-            // Tipos de parámetros formales
+            // Tipos de parÃ¡metros formales
             java.util.List<String> formalTypes = sym.paramTypes;
             int expected = (formalTypes != null ? formalTypes.size() : 0);
             int received = (args != null ? args.size() : 0);
 
-            // Verificar cantidad de parámetros
+            // Verificar cantidad de parÃ¡metros
             if (expected != received) {
                 SemanticAnalyzer.addError(
                     line,
@@ -3000,7 +2997,7 @@ class CUP$Parser$actions {
                     "CANT_PARAM_INCORRECTA"
                 );
             } else {
-                // Verificar tipos parámetro por parámetro
+                // Verificar tipos parÃ¡metro por parÃ¡metro
                 for (int i = 0; i < expected; i++) {
                     String expectedType = formalTypes.get(i);
 
@@ -3008,7 +3005,7 @@ class CUP$Parser$actions {
                     String argType = (argEntry != null ? argEntry.type : "ERROR");
 
                     if ("ERROR".equals(argType)) {
-                        // Ya hubo error antes en esa expresión, no duplicamos
+                        // Ya hubo error antes en esa expresiÃ³n, no duplicamos
                         continue;
                     }
 
@@ -3028,7 +3025,7 @@ class CUP$Parser$actions {
                 }
             }
 
-            // Traducción muy simple de la llamada (sin manejar retorno aún)
+            // TraducciÃ³n muy simple de la llamada (sin manejar retorno aÃºn)
             CodeGenerator.emitCode("CALL " + id);
         }
     
@@ -3057,7 +3054,7 @@ class CUP$Parser$actions {
                 "FUNCION_NO_DEFINIDA"
             );
         } else {
-            // Verificar que la función/procedimiento no espere parámetros
+            // Verificar que la funciÃ³n/procedimiento no espere parÃ¡metros
             java.util.List<String> formalTypes = sym.paramTypes;
             int expected = (formalTypes != null ? formalTypes.size() : 0);
 
@@ -3085,14 +3082,14 @@ class CUP$Parser$actions {
 		int restoright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		java.util.List<SemanticStack.StackEntry> resto = (java.util.List<SemanticStack.StackEntry>)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		
-        // Sacamos el resultado de la primera expresión de la lista
+        // Sacamos el resultado de la primera expresiÃ³n de la lista
         SemanticStack.StackEntry expr = null;
         if (SemanticStack.size() > 0) {
             expr = SemanticStack.pop();
         }
 
         java.util.List<SemanticStack.StackEntry> list = new java.util.ArrayList<>();
-        list.add(expr); // puede ser null si hubo algún problema
+        list.add(expr); // puede ser null si hubo algÃºn problema
 
         if (resto != null) {
             list.addAll(resto);

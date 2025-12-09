@@ -9,6 +9,7 @@ section .data
     newline DB 10, 0
     fmt_int DB '%d', 10, 0
     fmt_str DB '%s', 10, 0
+    str0 DB "Fin", 0
 
 section .bss
     numero RESD 1
@@ -21,6 +22,9 @@ section .bss
     t0 RESD 1
     t1 RESD 1
     t2 RESD 1
+    t3 RESD 1
+    t4 RESD 1
+    t5 RESD 1
 
 section .text
 global _start
@@ -28,27 +32,33 @@ global _start
 _start:
     ; Asignación: funcion4 = 0
     MOV DWORD [funcion4], 0
-    ; t0 = a + 6
+    ; Asignación: t0 = 6
+    MOV DWORD [t0], 6
+    ; t1 = a + t0
     MOV EAX, [a]
-    ADD EAX, [6]
-    MOV [t0], EAX
-    ; Asignación: a = t0
-    MOV EAX, [t0]
+    ADD EAX, [t0]
+    MOV [t1], EAX
+    ; Asignación: a = t1
+    MOV EAX, [t1]
     MOV [a], EAX
     ; Asignación: funcion5 = 0
     MOV DWORD [funcion5], 0
-    t1 = a > 8
+    ; Asignación: t2 = 8
+    MOV DWORD [t2], 8
+    t3 = a > t2
     ; Asignación: i = 0
     MOV DWORD [i], 0
-    ; t2 = x + 1
+    ; Asignación: t4 = 1
+    MOV DWORD [t4], 1
+    ; t5 = x + t4
     MOV EAX, [x]
-    ADD EAX, [1]
-    MOV [t2], EAX
-    ; Asignación: x = t2
-    MOV EAX, [t2]
+    ADD EAX, [t4]
+    MOV [t5], EAX
+    ; Asignación: x = t5
+    MOV EAX, [t5]
     MOV [x], EAX
     ; WRITE(string)
-    PUSH "Fin"
+    PUSH str0
     PUSH fmt_str
     CALL printf
     ADD ESP, 8
