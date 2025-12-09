@@ -78,6 +78,32 @@ public class MainParser {
         System.out.println();
         SymbolTable.print();
 
+        // 7) Generar archivo ASM si no hay errores
+        boolean hasLexErrors = (sc != null && sc.getErrores() != null && !sc.getErrores().isEmpty());
+        boolean hasSynErrors = (p != null && p.getErroresSintacticos() != null && !p.getErroresSintacticos().isEmpty());
+        boolean hasSemErrors = SemanticAnalyzer.hasErrors();
+
+        if (!hasLexErrors && !hasSynErrors && !hasSemErrors) {
+            try {
+                java.nio.file.Path srcPath = Paths.get(sourcePath);
+                String baseName = srcPath.getFileName().toString();
+                int dot = baseName.lastIndexOf('.');
+                if (dot != -1) {
+                    baseName = baseName.substring(0, dot);
+                }
+                java.nio.file.Path outPath = srcPath.resolveSibling(baseName + ".asm");
+
+                // Por seguridad, declarar globals desde la tabla antes de escribir
+                CodeGenerator.declareAllGlobalVariables();
+                CodeGenerator.generateFile(outPath.toString());
+                System.out.println("[CODE GEN] Archivo ASM generado: " + outPath);
+            } catch (Exception e) {
+                System.err.println("[CODE GEN] Error al generar ASM: " + e.getMessage());
+            }
+        } else {
+            System.out.println("[CODE GEN] Se omite generacion de ASM por errores detectados.");
+        }
+
         System.out.println("=== Fin del analisis P3 ===");
     }
 

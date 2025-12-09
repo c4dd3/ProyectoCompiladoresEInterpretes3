@@ -31,6 +31,7 @@ public class CodeGenerator {
     // CONTADORES PARA TEMPORALES Y LABELS
     // ========================================================================
     
+    private static Set<String> declaredGlobals = new LinkedHashSet<>(); // seguimiento de globals
     private static int tempCounter = 0;
     private static int labelCounter = 0;
     
@@ -58,6 +59,7 @@ public class CodeGenerator {
         dataSection.clear();
         bssSection.clear();
         textSection.clear();
+        declaredGlobals.clear();
         tempCounter = 0;
         labelCounter = 0;
         
@@ -140,6 +142,12 @@ public class CodeGenerator {
      * Declara una variable global en la sección .bss
      */
     public static void declareGlobalVariable(String name, String type) {
+        String key = name.toLowerCase();
+        if (declaredGlobals.contains(key)) {
+            return;  // evitar doble emisión
+        }
+        declaredGlobals.add(key);
+
         String declaration = switch (type) {
             case "INT" -> "RESD 1";          // 4 bytes (entero)
             case "REAL" -> "RESQ 1";         // 8 bytes (double)

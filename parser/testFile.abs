@@ -4,6 +4,7 @@ VAR
 
 numero,limite,contador: INT;  
 nombre, apellido: STRING;
+a, i: INT;
 
 FUNCTION funcion4 ():INT
 BEGIN

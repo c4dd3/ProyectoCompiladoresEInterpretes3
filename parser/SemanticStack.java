@@ -169,7 +169,14 @@ public class SemanticStack {
         
         // Si no son constantes, generar código temporal
         String temp = CodeGenerator.newTemp();
-        CodeGenerator.emitCode(temp + " = " + left.value + " " + operator + " " + right.value);
+        switch (operator) {
+            case "+" -> CodeGenerator.emitAdd(temp, left.value, right.value);
+            case "-" -> CodeGenerator.emitSub(temp, left.value, right.value);
+            case "*" -> CodeGenerator.emitMul(temp, left.value, right.value);
+            case "/" -> CodeGenerator.emitDiv(temp, left.value, right.value);
+            case "MOD" -> CodeGenerator.emitMod(temp, left.value, right.value);
+            default -> CodeGenerator.emitCode(temp + " = " + left.value + " " + operator + " " + right.value);
+        }
         push(new StackEntry(left.type, temp));
     }
     
@@ -182,8 +189,13 @@ public class SemanticStack {
         StackEntry left = pop();
         
         String temp = CodeGenerator.newTemp();
-        CodeGenerator.emitCode(temp + " = " + left.value + " " + operator + " " + right.value);
-        push(new StackEntry("BOOL", temp));
+        if ("=".equals(operator)) {
+            CodeGenerator.emitEqual(temp, left.value, right.value);
+            push(new StackEntry("BOOL", temp));
+        } else {
+            CodeGenerator.emitCode(temp + " = " + left.value + " " + operator + " " + right.value);
+            push(new StackEntry("BOOL", temp));
+        }
     }
     
     /**

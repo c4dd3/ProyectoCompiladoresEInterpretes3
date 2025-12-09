@@ -235,6 +235,10 @@ declaracion_variable_global ::= lista_identificadores:ids DOS_PUNTOS tipo:t PUNT
                 );
             }
         }
+        // Declarar variables globales en el generador de código
+        for (IdInfo id : ids) {
+            CodeGenerator.declareGlobalVariable(id.name, t);
+        }
     :}
     | lista_identificadores DOS_PUNTOS error PUNTO_COMA
       {: parser.report_error("Tipo de dato invalido o faltante en declaracion de variable. Use: INT, REAL, STRING o CHAR", null); :}
@@ -445,7 +449,7 @@ retorno ::= IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
             );
         }
 
-        // 2) Verificar tipo de retorno vs tipo de la función
+        // 2) Verificar tipo de retorno vs tipo de la funci�n
         SymbolTable.Symbol funSym = SymbolTable.lookupInScope(currentScope, "GLOBAL");
         if (funSym != null && expr != null && !expr.type.equals("ERROR")) {
 
@@ -462,8 +466,12 @@ retorno ::= IDENTIFICADOR:id ASIGNACION expresion PUNTO_COMA
                     "TIPO_RETORNO_INCOMPATIBLE"
                 );
             } else {
-                // Código intermedio para el retorno: nombreFuncion = valor
-                CodeGenerator.emitCode(currentScope + " = " + expr.value);
+                // C�digo intermedio para el retorno: nombreFuncion = valor
+                if (expr.isConst && expr.type.equals("INT")) {
+                    CodeGenerator.emitAssignmentConst(currentScope, expr.getIntValue());
+                } else {
+                    CodeGenerator.emitAssignment(currentScope, expr.value);
+                }
             }
         }
     :}
@@ -570,7 +578,11 @@ sentencia ::=
                 );
             } else {
                 // Código intermedio: id = expr.value
-                CodeGenerator.emitCode(id + " = " + expr.value);
+                if (expr.isConst && expr.type.equals("INT")) {
+                    CodeGenerator.emitAssignmentConst(id, expr.getIntValue());
+                } else {
+                    CodeGenerator.emitAssignment(id, expr.value);
+                }
             }
         }
     :}
@@ -599,7 +611,7 @@ sentencia ::=
             );
         } else {
             // x++  →  x = x + 1
-            CodeGenerator.emitCode(id + " = " + id + " + 1");
+            CodeGenerator.emitIncrement(id);
         }
     :}
   | IDENTIFICADOR:id DECREMENTO PUNTO_COMA
@@ -623,7 +635,7 @@ sentencia ::=
             );
         } else {
             // x--  →  x = x - 1
-            CodeGenerator.emitCode(id + " = " + id + " - 1");
+            CodeGenerator.emitDecrement(id);
         }
     :}
   | error PUNTO_COMA
@@ -686,7 +698,11 @@ sentencia_main ::=
                     "TIPOS_INCOMPATIBLES"
                 );
             } else {
-                CodeGenerator.emitCode(id + " = " + expr.value);
+                if (expr.isConst && expr.type.equals("INT")) {
+                    CodeGenerator.emitAssignmentConst(id, expr.getIntValue());
+                } else {
+                    CodeGenerator.emitAssignment(id, expr.value);
+                }
             }
         }
     :}
@@ -714,7 +730,7 @@ sentencia_main ::=
                 "TIPO_NO_NUMERICO"
             );
         } else {
-            CodeGenerator.emitCode(id + " = " + id + " + 1");
+            CodeGenerator.emitIncrement(id);
         }
     :}
   | IDENTIFICADOR:id DECREMENTO PUNTO_COMA
@@ -737,7 +753,7 @@ sentencia_main ::=
                 "TIPO_NO_NUMERICO"
             );
         } else {
-            CodeGenerator.emitCode(id + " = " + id + " - 1");
+            CodeGenerator.emitDecrement(id);
         }
     :}
   | error PUNTO_COMA
@@ -842,7 +858,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
                    // Usar valor actual en la expresión
                    SemanticStack.loadVariable(id, line);
                    // y luego hacer el efecto lateral x = x + 1
-                   CodeGenerator.emitCode(id + " = " + id + " + 1");
+                   CodeGenerator.emitIncrement(id);
                }
            :}
          | IDENTIFICADOR:id DECREMENTO
@@ -869,7 +885,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
                    SemanticStack.loadConstant("ERROR", "0");
                } else {
                    SemanticStack.loadVariable(id, line);
-                   CodeGenerator.emitCode(id + " = " + id + " - 1");
+                   CodeGenerator.emitDecrement(id);
                }
            :}
          | INCREMENTO IDENTIFICADOR:id
@@ -895,7 +911,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
                    );
                    SemanticStack.loadConstant("ERROR", "0");
                } else {
-                   CodeGenerator.emitCode(id + " = " + id + " + 1");
+                   CodeGenerator.emitIncrement(id);
                    SemanticStack.loadVariable(id, line);
                }
            :}
@@ -922,7 +938,7 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
                    );
                    SemanticStack.loadConstant("ERROR", "0");
                } else {
-                   CodeGenerator.emitCode(id + " = " + id + " - 1");
+                   CodeGenerator.emitDecrement(id);
                    SemanticStack.loadVariable(id, line);
                }
            :}
@@ -1003,42 +1019,63 @@ for_stmt ::= FOR IDENTIFICADOR ASIGNACION expresion TO expresion DO BEGIN senten
              {: parser.report_error("Error en declaracion de FOR. Formato: 'FOR variable := inicio TO fin DO BEGIN ... END'", null); :}
            ;
 
-if_stmt ::= IF condicion THEN BEGIN sentencias_main END
-    {:
+if_stmt ::= IF condicion {: 
         SemanticStack.StackEntry cond = null;
         if (SemanticStack.size() > 0) {
             cond = SemanticStack.pop();
         }
-
-        if (cond != null && !cond.type.equals("BOOL") && !cond.type.equals("ERROR")) {
+        String lblFalse = null;
+        if (cond != null && cond.type.equals("BOOL")) {
+            lblFalse = CodeGenerator.emitIfStart(cond.value);
+        } else if (cond != null && !cond.type.equals("ERROR")) {
             java_cup.runtime.Symbol ifSym =
-                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-5);
+                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
             int line = (ifSym.left >= 0 ? ifSym.left + 1 : 1);
-
             SemanticAnalyzer.addError(
                 line,
                 "La condicion del IF debe ser de tipo BOOL",
                 "CONDICION_NO_BOOLEANA"
             );
+        }
+        RESULT = lblFalse;
+    :} THEN BEGIN sentencias_main END
+    {:
+        String lblFalse = (String)((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)).value;
+        if (lblFalse != null) {
+            CodeGenerator.emitIfEnd(lblFalse);
         }
     :}
-          | IF condicion THEN BEGIN sentencias_main END ELSE BEGIN sentencias_main END
-    {:
+          | IF condicion {: 
         SemanticStack.StackEntry cond = null;
         if (SemanticStack.size() > 0) {
             cond = SemanticStack.pop();
         }
-
-        if (cond != null && !cond.type.equals("BOOL") && !cond.type.equals("ERROR")) {
+        String lblFalse = null;
+        if (cond != null && cond.type.equals("BOOL")) {
+            lblFalse = CodeGenerator.emitIfStart(cond.value);
+        } else if (cond != null && !cond.type.equals("ERROR")) {
             java_cup.runtime.Symbol ifSym =
-                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-9);
+                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
             int line = (ifSym.left >= 0 ? ifSym.left + 1 : 1);
-
             SemanticAnalyzer.addError(
                 line,
                 "La condicion del IF debe ser de tipo BOOL",
                 "CONDICION_NO_BOOLEANA"
             );
+        }
+        RESULT = lblFalse;
+    :} THEN BEGIN sentencias_main END {:
+        String lblFalse = (String)((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)).value;
+        String lblEnd = null;
+        if (lblFalse != null) {
+            lblEnd = CodeGenerator.emitElse(lblFalse);
+        }
+        RESULT = lblEnd;
+    :} ELSE BEGIN sentencias_main END
+    {:
+        String lblEnd = (String)((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)).value;
+        if (lblEnd != null) {
+            CodeGenerator.emitIfElseEnd(lblEnd);
         }
     :}
           | IF error BEGIN sentencias_main END
@@ -1053,6 +1090,7 @@ if_stmt ::= IF condicion THEN BEGIN sentencias_main END
             {: parser.report_error("Error en la estructura del IF ELSE", null); :}
           ;
 
+/* ========== READ Y WRITE ========== */
 /* ========== READ Y WRITE ========== */
 read_stmt ::=
       READ PARENTESIS_IZQ PARENTESIS_DER PUNTO_COMA
@@ -1084,13 +1122,30 @@ read_stmt ::=
 
 write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones:args PARENTESIS_DER PUNTO_COMA
     {:
-        // Generar una instrucción WRITE por cada expresión
+        // Generar una instrucci�n WRITE por cada expresi�n
         if (args != null) {
             for (SemanticStack.StackEntry entry : args) {
                 if (entry == null) continue;
 
-                // Podés validar tipos si querés (por ejemplo, no permitir BOOL)
-                CodeGenerator.emitCode("WRITE " + entry.value);
+                if ("INT".equals(entry.type)) {
+                    if (entry.isConst) {
+                        String t = CodeGenerator.newTemp();
+                        CodeGenerator.emitAssignmentConst(t, entry.getIntValue());
+                        CodeGenerator.emitWriteInt(t);
+                    } else {
+                        CodeGenerator.emitWriteInt(entry.value);
+                    }
+                } else if ("STRING".equals(entry.type)) {
+                    String label = entry.value;
+                    if (entry.isConst) {
+                        String content = entry.value;
+                        if (content.startsWith("\"") && content.endsWith("\"") && content.length() >= 2) {
+                            content = content.substring(1, content.length() - 1);
+                        }
+                        label = CodeGenerator.addStringLiteral(content);
+                    }
+                    CodeGenerator.emitWriteString(label);
+                }
             }
         }
     :}
@@ -1100,6 +1155,7 @@ write_stmt ::= WRITE PARENTESIS_IZQ lista_expresiones:args PARENTESIS_DER PUNTO_
                {: parser.report_error("Falta '(' despues de WRITE. Formato: 'WRITE(exp1, exp2, ...);'", null); :}
              ;
 
+/* ========== LLAMADAS A FUNCIONES ========== */
 /* ========== LLAMADAS A FUNCIONES ========== */
 llamada_funcion ::=
     IDENTIFICADOR:id PARENTESIS_IZQ lista_expresiones:args PARENTESIS_DER
@@ -1249,3 +1305,5 @@ tipo ::= INT
        | STRING
        {: RESULT = "STRING"; :}
        ;
+
+
