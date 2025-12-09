@@ -1,19 +1,27 @@
-PROGRAM Prueba
-
+PROGRAM b
 VAR
-  numero, limite, contador, a, i: INT;
-  nombre, apellido: STRING;
+    x: INT ;
+    y: INT ;
+ 
 
 BEGIN
-  numero := 1;
-  limite := 2;
-  contador := numero + limite;
-  a := 5;
-  i := 0;
 
-  a := a + 1;
-  a := a - 1;
+	x:= 10;
+	y:= 20;
 
-  WRITE("Fin");
-  WRITE(a);
+        x := 4 + 5;
+	
+	IF y = 15 THEN
+        BEGIN
+            x := x * y;
+        END
+	ELSE
+        BEGIN
+            x := x - y;
+        END
+	x++;
+	y--;
+	 
+	WRITE(x);
+	WRITE(y);
 END

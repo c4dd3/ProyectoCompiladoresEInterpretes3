@@ -1019,76 +1019,20 @@ for_stmt ::= FOR IDENTIFICADOR ASIGNACION expresion TO expresion DO BEGIN senten
              {: parser.report_error("Error en declaracion de FOR. Formato: 'FOR variable := inicio TO fin DO BEGIN ... END'", null); :}
            ;
 
-if_stmt ::= IF condicion {: 
-        SemanticStack.StackEntry cond = null;
-        if (SemanticStack.size() > 0) {
-            cond = SemanticStack.pop();
-        }
-        String lblFalse = null;
-        if (cond != null && cond.type.equals("BOOL")) {
-            lblFalse = CodeGenerator.emitIfStart(cond.value);
-        } else if (cond != null && !cond.type.equals("ERROR")) {
-            java_cup.runtime.Symbol ifSym =
-                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
-            int line = (ifSym.left >= 0 ? ifSym.left + 1 : 1);
-            SemanticAnalyzer.addError(
-                line,
-                "La condicion del IF debe ser de tipo BOOL",
-                "CONDICION_NO_BOOLEANA"
-            );
-        }
-        RESULT = lblFalse;
-    :} THEN BEGIN sentencias_main END
-    {:
-        String lblFalse = (String)((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)).value;
-        if (lblFalse != null) {
-            CodeGenerator.emitIfEnd(lblFalse);
-        }
-    :}
-          | IF condicion {: 
-        SemanticStack.StackEntry cond = null;
-        if (SemanticStack.size() > 0) {
-            cond = SemanticStack.pop();
-        }
-        String lblFalse = null;
-        if (cond != null && cond.type.equals("BOOL")) {
-            lblFalse = CodeGenerator.emitIfStart(cond.value);
-        } else if (cond != null && !cond.type.equals("ERROR")) {
-            java_cup.runtime.Symbol ifSym =
-                (java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3);
-            int line = (ifSym.left >= 0 ? ifSym.left + 1 : 1);
-            SemanticAnalyzer.addError(
-                line,
-                "La condicion del IF debe ser de tipo BOOL",
-                "CONDICION_NO_BOOLEANA"
-            );
-        }
-        RESULT = lblFalse;
-    :} THEN BEGIN sentencias_main END {:
-        String lblFalse = (String)((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)).value;
-        String lblEnd = null;
-        if (lblFalse != null) {
-            lblEnd = CodeGenerator.emitElse(lblFalse);
-        }
-        RESULT = lblEnd;
-    :} ELSE BEGIN sentencias_main END
-    {:
-        String lblEnd = (String)((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-4)).value;
-        if (lblEnd != null) {
-            CodeGenerator.emitIfElseEnd(lblEnd);
-        }
-    :}
-          | IF error BEGIN sentencias_main END
-            {: parser.report_error("Error en la estructura del IF", null); :}
-          | IF condicion THEN error sentencias_main END
-            {: parser.report_error("Error en la estructura del IF", null); :}
-          | IF condicion THEN BEGIN sentencias_main error
-            {: parser.report_error("Error en la estructura del IF", null); :}
-          | IF condicion THEN BEGIN sentencias_main END ELSE BEGIN error END
-            {: parser.report_error("Error en la estructura del IF ELSE", null); :}
-          | IF condicion THEN BEGIN sentencias_main END ELSE error sentencias_main END
-            {: parser.report_error("Error en la estructura del IF ELSE", null); :}
-          ;
+if_stmt ::=
+    IF condicion THEN BEGIN sentencias_main END
+  | IF condicion THEN BEGIN sentencias_main END ELSE BEGIN sentencias_main END
+  | IF error THEN BEGIN sentencias_main END
+    {: parser.report_error("Error en la estructura del IF", null); :}
+  | IF condicion THEN error sentencias_main END
+    {: parser.report_error("Error en la estructura del IF", null); :}
+  | IF condicion THEN BEGIN sentencias_main error
+    {: parser.report_error("Error en la estructura del IF", null); :}
+  | IF condicion THEN BEGIN sentencias_main END ELSE BEGIN error END
+    {: parser.report_error("Error en la estructura del IF ELSE", null); :}
+  | IF condicion THEN BEGIN sentencias_main END ELSE error sentencias_main END
+    {: parser.report_error("Error en la estructura del IF ELSE", null); :}
+  ;
 
 /* ========== READ Y WRITE ========== */
 /* ========== READ Y WRITE ========== */

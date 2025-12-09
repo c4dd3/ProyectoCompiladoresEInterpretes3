@@ -34,6 +34,8 @@ public class CodeGenerator {
     private static Set<String> declaredGlobals = new LinkedHashSet<>(); // seguimiento de globals
     private static int tempCounter = 0;
     private static int labelCounter = 0;
+    // Pila de labels de fin para IF-ELSE
+    private static Deque<String> ifEndStack = new ArrayDeque<>();
     
     // ========================================================================
     // CONFIGURACIÓN
@@ -62,6 +64,7 @@ public class CodeGenerator {
         declaredGlobals.clear();
         tempCounter = 0;
         labelCounter = 0;
+        ifEndStack.clear();
         
         // Agregar mensajes predefinidos para WRITE
         addData("newline", "DB 10, 0");  // Salto de línea
@@ -348,6 +351,8 @@ public class CodeGenerator {
      */
     public static String emitElse(String labelFalse) {
         String labelEnd = newLabel();
+        // Guardar el label de fin por si luego no se pasa a emitIfElseEnd
+        ifEndStack.push(labelEnd);
         emitCode("JMP " + labelEnd);     // Saltar al final después del THEN
         emitLabel(labelFalse);           // Inicio del ELSE
         emitComment("=== ELSE ===");
@@ -366,6 +371,16 @@ public class CodeGenerator {
      * Termina un IF-ELSE
      */
     public static void emitIfElseEnd(String labelEnd) {
+        // Recuperar de la pila si no viene (o si coincide con la cima)
+        if (labelEnd == null && !ifEndStack.isEmpty()) {
+            labelEnd = ifEndStack.pop();
+        } else if (labelEnd != null && !ifEndStack.isEmpty() && ifEndStack.peek().equals(labelEnd)) {
+            ifEndStack.pop();
+        }
+        // Última defensa: si sigue siendo null, generar uno para no dejar etiqueta indefinida
+        if (labelEnd == null) {
+            labelEnd = newLabel();
+        }
         emitLabel(labelEnd);
         emitComment("=== END IF-ELSE ===");
     }
